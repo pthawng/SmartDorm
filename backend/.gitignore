@@ -1,0 +1,17 @@
+# Go binaries
+*.exe
+*.out
+*.test
+
+# Build
+bin/
+build/
+
+# Temp
+tmp/
+
+# env
+.env
+
+# coverage
+coverage.out
