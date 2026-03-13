@@ -1,70 +1,248 @@
-SmartDorm - Business Logic Specification
-1. Tổng quan hệ thống (System Overview)
-SmartDorm là nền tảng tích hợp hai mục tiêu:
+# SmartDorm — Business Logic
 
-- Community Platform: Mạng xã hội giúp kết nối người thuê và chủ trọ.
-- Rental Management System (RMS): Hệ thống SaaS quản lý vận hành, tài chính và giao tiếp cho khu trọ.
+## 1. Identity & Authorization Model
 
-2. Phân hệ người dùng & Phân quyền (User Roles & RBAC)
-- Guest/Community User: Xem tin, tìm kiếm, đăng bài thảo luận.
+SmartDorm uses a **two-layer authorization model** with a single identity system:
 
-- Tenant (Người thuê): Quản lý hóa đơn, báo cáo sự cố, xem hợp đồng, chat.
+```
+Identity Layer
+    users
+      │
+      ├── memberships  →  workspace roles  (product/user system)
+      │
+      └── admin_roles  →  platform roles   (internal admin system)
+```
 
-- Landlord (Chủ trọ): Quản lý tòa nhà, phòng, người thuê, tài chính, phê duyệt yêu cầu.
+### 1.1 Workspace Roles (User System)
 
-- System Admin: Quản trị toàn bộ nền tảng, kiểm duyệt nội dung, quản lý người dùng.
+| Role | Context | Permissions |
+|---|---|---|
+| `owner` | Within a workspace | Full CRUD on workspace's properties, rooms, renters, contracts, invoices, maintenance |
+| `property_manager` | Within a workspace | *(future)* Manage assigned properties only |
+| `staff` | Within a workspace | *(future)* Read-only operational access |
 
-3. Đặc tả chi tiết các phân hệ (Detailed Modules)
-3.1. Community Platform (MXH & Tìm kiếm)
-Tìm kiếm thông minh: Lọc theo tọa độ (GIS), khoảng giá, diện tích và tiện ích (Wifi, máy lạnh, tự do...).
+> The initial workspace creator is automatically assigned `owner` role via `memberships`.
 
-Hệ thống bài đăng: Hỗ trợ bài đăng tìm phòng và bài đăng cho thuê. Tích hợp tương tác (Like, Comment).
+### 1.2 Renter Access
 
-Trust System: Review và Rating phải dựa trên lịch sử thuê phòng thực tế (Verified Review) để tránh spam.
+Renters are **not** workspace members. They access the system through their own **renter profile** linked to a `user` account.
 
-3.2. Rental Management (Cốt lõi vận hành)
-Cấu trúc dữ liệu: Property (Khu trọ) > Room (Phòng) > Slot (Giường/Chỗ ở).
+| Context | Permissions |
+|---|---|
+| Renter (authenticated) | Read own contracts (ACTIVE + EXPIRED only), read own invoices, submit and read own maintenance requests |
 
-Trạng thái phòng: * Available: Sẵn sàng cho thuê.
+### 1.3 Platform Admin Roles (Admin System)
 
-Occupied: Đã có người ở.
+| Role | Permissions |
+|---|---|
+| `super_admin` | Full system access — workspaces, users, billing |
+| `support` | Read-only access to workspace data for customer support |
+| `finance` | Access to subscription and billing data |
 
-Maintenance: Đang sửa chữa (không thể tạo hợp đồng).
+> Admin users do **not** belong to any workspace. Admin endpoints are completely separate from the user-facing API.
 
-Hợp đồng (Contract): * Phải có ngày bắt đầu, ngày kết thúc và số tiền cọc.
+### 1.4 Dual-Role: One User, Multiple Contexts
 
-Trạng thái: Draft, Active, Expired, Terminated.
+A single user account can simultaneously:
+- Be an `owner` of one or more workspaces (acting as landlord)
+- Be a `renter` in another workspace (renting a room from a different landlord)
+- Hold an `admin_role` on the platform
 
-3.3. Financial & Billing (Hệ thống tài chính)
-Utility Tracking: Ghi nhận chỉ số điện/nước hàng tháng. Công thức: (Số mới - Số cũ) * Đơn giá.
+```
+User: Nguyen Van A
+  ├── memberships → Workspace "Nha Tro A", role = 'owner'  [Landlord context]
+  └── renters.user_id → "Nha Tro B"                        [Renter context]
+```
 
-Billing Logic: Hóa đơn được tạo tự động vào ngày cấu hình (ví dụ: ngày 1 hàng tháng).
+At login, the system returns all available contexts. The user (or client app) selects which context to operate in, and receives a JWT scoped to that context.
 
-Total = Rent + Electricity + Water + Services - Discounts.
+---
 
-Thanh toán: Hỗ trợ QR Code thanh toán và đối soát tự động qua Webhook.
+## 2. Domain Entities
 
-3.4. Communication & Realtime
-Chat: Hỗ trợ chat 1-1 giữa Landlord - Tenant và chat nhóm theo khu trọ.
+### User
+Represents any authenticated identity in the system.
+- Fields: `id`, `email`, `password_hash`, `full_name`, `phone`, `created_at`
+- No embedded role — authorization is determined by `memberships` and `admin_roles`.
 
-Notifications: * Realtime: Qua WebSocket (Hóa đơn mới, tin nhắn mới).
+### Workspace
+A SaaS workspace operated by a landlord. All rental domain data is workspace-scoped.
+- Has many `Properties`.
+- Has many `Members` (via `memberships`).
+- Has many `Renters`.
 
-System: Qua Email/Push (Hợp đồng sắp hết hạn, thông báo cúp điện).
+### Membership
+Links a user to a workspace with a role.
+- One user can have memberships in multiple workspaces.
+- Each workspace-user pair is unique (cannot have two roles in same workspace — future: composite role support).
 
-4. Các ràng buộc nghiệp vụ (Critical Business Rules)
-Tính nhất quán tài chính: Tất cả các giao dịch tiền tệ phải sử dụng kiểu dữ liệu int64 (VNĐ) để tránh sai số. Sử dụng Database Transaction cho mọi thao tác cập nhật số dư hoặc tạo hóa đơn.
+### Property
+A physical location managed within a workspace (e.g., a building or house).
+- Belongs to one `Workspace`.
+- Has many `Rooms`.
 
-Ràng buộc hợp đồng: Một Slot chỉ có thể thuộc về duy nhất một Active Contract.
+### Room
+An individual rentable unit within a Property.
+- Belongs to one `Property`.
+- Has a `status`: `AVAILABLE`, `OCCUPIED`, `MAINTENANCE`.
+- Has a `monthly_price` (int64, VND).
 
-Bảo mật dữ liệu: Landlord tuyệt đối không thể truy cập dữ liệu (phòng, hóa đơn, người thuê) của Landlord khác (Data Isolation).
+### Renter
+A renter profile managed within a workspace. Previously called "Tenant" in domain — renamed to avoid naming conflict with SaaS "tenant" (workspace).
+- Optionally linked to a `User` account (a renter may not have a login yet).
+- Belongs to one `Workspace` (a renter profile is workspace-scoped).
+- Has personal info: `full_name`, `phone`, `id_number`, `date_of_birth`.
 
-Xử lý sự cố: Tenant gửi yêu cầu sửa chữa -> Landlord nhận thông báo -> Landlord cập nhật trạng thái In Progress -> Resolved -> Tenant xác nhận.
+### Contract
+A formal rental agreement between a workspace and a renter for a specific room.
+- Belongs to one `Workspace`, one `Renter`, one `Room`.
+- Has a lifecycle: `DRAFT` → `ACTIVE` → `TERMINATED` / `EXPIRED`.
+- Defines: `start_date`, `end_date`, `monthly_rent` (int64), `deposit_amount` (int64).
 
-5. Định nghĩa Hoàn thành (Definition of Done - DoD)
-Mọi API phải có validation dữ liệu (Class-validator/Struct validation).
+### Invoice
+A periodic billing record generated from an active contract.
+- Belongs to one `Contract`, one `Workspace`, one `Renter` (denormalized).
+- Contains: `billing_period_start`, `billing_period_end`, `amount_due` (int64), `status`.
+- Status: `PENDING` → `PAID` / `OVERDUE`; can be `CANCELLED`.
 
-Mọi logic tính toán tài chính phải có Unit Test bao phủ 100%.
+### MaintenanceRequest
+A repair or service request submitted for a room.
+- Belongs to one `Room` and one `Workspace`.
+- Optionally linked to a `Renter`.
+- Status: `OPEN` → `IN_PROGRESS` → `RESOLVED` / `CLOSED`.
 
-Mọi truy vấn danh sách (Search, Browse) phải có Pagination (phân trang).
+---
 
-Log lại mọi hành động thay đổi dữ liệu quan trọng (Audit Log).
+## 3. Business Rules
+
+### Workspace
+- A user becomes `owner` of a workspace automatically upon creating it.
+- A workspace cannot be deleted if it has active contracts.
+
+### Property & Room
+- Workspace members (`owner`) can only manage properties within their workspace.
+- A room cannot be deleted if it has an active contract.
+- A room's status automatically becomes `OCCUPIED` when a contract is activated, and reverts to `AVAILABLE` when the contract ends or is terminated.
+
+### Renter
+- A renter profile is owned by a workspace; a renter profile cannot belong to multiple workspaces.
+- A renter cannot be deleted if they have an active or draft contract.
+- A `user` can be linked to multiple renter profiles across different workspaces (dual-role support).
+
+### Contract
+- Only one `ACTIVE` contract is allowed per room at any time.
+- A contract cannot be activated if the room is `OCCUPIED` or `MAINTENANCE`.
+- `start_date` must be before `end_date`.
+- `monthly_rent` must be greater than zero.
+- Terminating a contract requires a `termination_reason` and `termination_date`.
+- When a contract expires (`end_date` reached), it transitions to `EXPIRED` via a scheduled job.
+- Contracts cannot be deleted once created.
+
+### Invoice
+- Invoices are generated per billing cycle (monthly by default).
+- Only one invoice per contract per billing period is allowed (unique constraint).
+- An invoice's `amount_due` is set at generation time from the contract's `monthly_rent`; it is **server-computed** and cannot be supplied or edited by the client.
+- Only a workspace `owner` (or authorized member) can mark an invoice as `PAID`.
+- Invoices cannot be deleted once created; they can only be cancelled with a reason.
+- An invoice transitions to `OVERDUE` when `due_date` passes and status is still `PENDING` (via scheduler).
+
+### Maintenance
+- Any user with access to the room (renter or workspace member) can submit a maintenance request.
+- Only the workspace `owner` (or property_manager) can update the status of a request.
+- Closing or resolving a request requires a `resolution_note`.
+
+---
+
+## 4. Workflows
+
+### Workspace Creation
+
+```
+User registers
+      │
+      ▼
+POST /workspaces { name }
+      │
+      ▼
+Workspace created
+      │
+      ▼
+Membership created: user_id + workspace_id + role = 'owner'
+```
+
+### Contract Lifecycle
+
+```
+[DRAFT] ──activate()──► [ACTIVE] ──terminate()──► [TERMINATED]
+                              │
+                         end_date reached (scheduler)
+                              │
+                              ▼
+                          [EXPIRED]
+```
+
+- `DRAFT`: Contract created but not yet in effect. Room status unchanged.
+- `ACTIVE`: Contract in force. Room status → `OCCUPIED`. Invoices can be generated.
+- `TERMINATED`: Ended early by workspace owner. Room status → `AVAILABLE`.
+- `EXPIRED`: Naturally ended at `end_date`. Room status → `AVAILABLE`.
+
+### Invoice Generation Workflow
+
+```
+Active Contract exists
+       │
+       ▼
+Owner triggers invoice generation (or scheduler runs)
+       │
+       ▼
+System checks: no existing invoice for this period?
+       │
+  YES  │   NO → Return error: DUPLICATE_INVOICE
+       ▼
+amount_due = contract.monthly_rent (server-computed snapshot)
+Invoice created with status PENDING
+       │
+       ▼
+[Event: InvoiceGenerated] → Notify relevant consumers
+       │
+Owner marks as PAID
+       ▼
+Invoice status → PAID
+[Event: InvoicePaid]
+```
+
+### Maintenance Request Workflow
+
+```
+Renter / Owner submits request
+       │
+       ▼
+Status: OPEN
+       │
+Owner begins work
+       ▼
+Status: IN_PROGRESS
+       │
+Work complete
+       ▼
+Status: RESOLVED ──► Owner closes ──► CLOSED
+```
+
+---
+
+## 5. Billing Logic
+
+- `amount_due` on an invoice = `contract.monthly_rent` at the time of generation (snapshot).
+- Future phases may include utility charges (water, electricity) as line items.
+- All amounts in `int64` (smallest currency unit — VND for Vietnamese market).
+- Pro-rating (partial month billing) is **out of scope for MVP**.
+- Late payment fees are **out of scope for MVP**.
+
+---
+
+## 6. Multi-Tenancy Isolation
+
+- Every domain entity stores `workspace_id` as a foreign key.
+- All queries are scoped by `workspace_id` extracted from the authenticated JWT.
+- Renters can only view data associated with their own contracts within a workspace.
+- Cross-workspace data access is forbidden at both the repository and service layers.
