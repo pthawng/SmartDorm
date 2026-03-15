@@ -172,8 +172,8 @@ Make sure the following tools are installed on your machine:
 ### Step 1 — Clone the Repository
 
 ```bash
-git clone https://github.com/lephuocthang/smartdorm.git
-cd smartdorm
+git clone https://github.com/lephuocthang/SmartDorm.git
+cd SmartDorm
 ```
 
 ### Step 2 — Start Infrastructure Services
@@ -367,9 +367,9 @@ All routes are versioned under `/api/v1/`. Every response follows a **unified en
 **Lê Phước Thắng**
 *Backend Developer*
 
-[![GitHub](https://img.shields.io/badge/GitHub-lephuocthang-181717?style=for-the-badge&logo=github)](https://github.com/lephuocthang)
-[![Email](https://img.shields.io/badge/Email-Contact%20Me-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:lephuocthang@email.com)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/lephuocthang)
+[![GitHub](https://img.shields.io/badge/GitHub-lephuocthang-181717?style=for-the-badge&logo=github)](https://github.com/pthawng)
+[![Email](https://img.shields.io/badge/Email-Contact%20Me-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:lephuocthang207@gmail.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/le-phuoc-thang-99b4a8255/)
 
 </div>
 
