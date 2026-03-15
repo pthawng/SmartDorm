@@ -31,8 +31,8 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		Environment: getEnvOrDefault("ENV", "development"),
 		Port:        port,
-		DatabaseURL: getEnvOrDefault("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/smartdorm?sslmode=disable"),
-		RedisURL:    getEnvOrDefault("REDIS_URL", "redis://localhost:6379/0"),
+		DatabaseURL: getEnvOrDefault("DATABASE_URL", "postgres://postgres:postgres@localhost:5433/smartdorm?sslmode=disable"),
+		RedisURL:    getEnvOrDefault("REDIS_URL", "redis://localhost:6380/0"),
 		JWTSecret:   getEnvOrDefault("JWT_SECRET", "super-secret-key-change-me-in-production"),
 	}
 
