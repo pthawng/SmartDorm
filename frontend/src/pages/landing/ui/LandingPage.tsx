@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Hero, FeaturedProperties, Community, HowItWorks } from '@/features/property-search/components';
 import { Button } from '@/shared/ui';
 import { Property } from '@/entities/property/model/types';
-import axiosClient from '@/shared/lib/axios/axiosClient';
+import axiosClient from '@/shared/api/axiosClient';
 
 const LandingPage = () => {
   const navigate = useNavigate();
