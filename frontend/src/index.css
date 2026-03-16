@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary-main: 14 165 233; /* #0ea5e9 */
+  }
+}
+
+html, body, #root {
+  height: 100%;
+}
