@@ -83,3 +83,74 @@ Global components and utilities that are business-agnostic.
 2. **Absolute Imports**: Use `@/features/...`, `@/shared/...` instead of relative paths (Configured in `vite.config.ts` and `tsconfig.json`).
 3. **Zustand Usage**: Stores live in `store/` if they are global (e.g., `authStore`), or inside `features/` if they are scoped to a specific complex interaction.
 4. **Validation**: Use Zod schemas in `entities/domain/model/` to ensure consistency between Forms (Frontend) and Schema (Backend).
+
+
+
+SmartDorm — Full Project Structure (Senior+ Final)
+Architectural Pattern: Feature-based + Domain-driven Rules: Thin Pages, Isolated Features, Centralized API & Config, Global Library Layer, Absolute Imports (@/*)
+
+📂 src/ Tree Overview
+bash
+src/
+├── app/                    # Entry, Providers, Global Layout, Router
+├── pages/                  # Route-level Thin Components
+├── features/               # Isolated Business Logic Modules
+├── entities/               # Core Domain Models & Schemas
+├── services/               # API clients & Centralized Endpoints
+├── shared/                 # Config, UI, Lib, Types, Utils
+├── store/                  # Global Zustand Stores
+└── tests/                  # Test Setup, Mocks, Integration Suites
+🏗 Detailed Infrastructure
+1. src/app/ (Orchestration)
+providers/: Centralized Context Providers.
+query-provider.tsx: TanStack Query (v5+) setup & DevTools.
+auth-provider.tsx: RBAC and session syncing.
+theme-provider.tsx: Tailwind/Theme config.
+router/: Central React Router definition.
+index.tsx: Page mapping, lazy loading, and protected route guards.
+layout/: Global Shell.
+root-layout.tsx: Sidebar, Header, Breadcrumbs, Global Modals.
+index.tsx: React DOM entry point.
+2. src/services/ (Data Typing Layer)
+apiClient.ts: Base Axios instance + interceptors (JWT, Workspace-ID).
+endpoints/: Single source of truth for all domain API calls.
+room.api.ts, contract.api.ts, invoice.api.ts, auth.api.ts, etc.
+3. src/shared/ (The Foundation)
+config/: Centralized System Config.
+env.ts: Typed environment variables (Vite-style).
+routes.ts: Centralized route constants (e.g., ROUTES.DASHBOARD.ROOMS).
+types/: Senior+ Global Typings.
+api.ts: ApiResponse<T>, PaginatedResponse<T>, QueryOptions.
+common.ts: ID, ISOString, Nullable<T>.
+lib/: Senior+ Library Layer.
+date.ts: date-fns wrappers for consistent formatting.
+currency.ts: Advanced money/pricing formatters.
+storage.ts: Type-safe LocalStorage/SessionStorage wrappers.
+ui/: UI Kit + System UI.
+atoms/: Basic components (Button, Input, Checkbox).
+loading.tsx: Skeleton patterns and global spinners.
+error-boundary.tsx: Component-level and Page-level error capture.
+empty-state.tsx: Standardized empty view patterns (No Data found).
+utils/: Lightweight bit-logic helpers (string manipulation, math).
+4. src/tests/ (Verification Layer)
+setup.ts: Vitest/Jest global configuration.
+mocks/: MSW handlers for API mocking.
+utils.tsx: Custom render methods with providers.
+🏙 Feature & Entity Internal Patterns
+Feature: src/features/<feature-name>/
+components/: Feature-specific UI.
+hooks/: Business logic (TanStack Query hooks mapping to 01_USER_FLOW endpoints).
+services/: Local mappers/selectors for global endpoints.
+types/: Feature-specific DTOs/Interfaces.
+index.ts: Strict public API (Export only what's needed).
+Entity: src/entities/<domain>/
+types.ts: Backend-matching interfaces as per 02_INFORMATION_ARCHITECTURE.
+constants.ts: Enums (e.g., RoomStatus = 'AVAILABLE').
+model/: Zod schemas for form/API validation.
+index.ts: Public API.
+🎯 Production Engineering Rules
+Thin Pages: Zero business logic inside src/pages/. Only layout coordination.
+Absolute Imports: Strictly use @/* (configured in tsconfig.json).
+API Centralization: Features must call services from @/services/endpoints/.
+Validation Driven: Every POST/PATCH request must have an associated Zod model from @/entities/.
+Standardized Formatting: Use @/shared/lib/ for all date/currency display to ensure UI consistency.

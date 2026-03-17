@@ -4,7 +4,7 @@
       "command": "npx",
       "args": ["-y", "@google/stitch-mcp-server"],
       "env": {
-        "STITCH_PROJECT_ID": "4434345706878704605",
+        "STITCH_PROJECT_ID": "3286544094490968008",
         "STITCH_DEFAULT_PLATFORM": "react",
         "STITCH_STYLING_LIBRARY": "tailwindcss"
       }
