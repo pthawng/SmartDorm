@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 /**
  * Typed environment variables.
  * Vite exposes env vars via `import.meta.env`.

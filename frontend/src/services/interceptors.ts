@@ -4,7 +4,7 @@
  * - Response: Handle 401 (redirect to login), 403 (permission denied).
  */
 
-import type { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from 'axios';
+import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig, AxiosError } from 'axios';
 import { ROUTES } from '@/shared/config/routes';
 
 export function setupInterceptors(client: AxiosInstance): void {
@@ -25,12 +25,12 @@ export function setupInterceptors(client: AxiosInstance): void {
 
       return config;
     },
-    (error) => Promise.reject(error),
+    (error: unknown) => Promise.reject(error),
   );
 
   // ── Response Interceptor ───────────────────────────────────
   client.interceptors.response.use(
-    (response) => response,
+    (response: AxiosResponse) => response,
     (error: AxiosError) => {
       const status = error.response?.status;
 
