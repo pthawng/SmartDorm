@@ -1,11 +1,9 @@
 /**
- * Admin Dashboard — composes dashboard-overview feature.
- * THIN PAGE: No business logic here.
+ * Landlord Dashboard / Admin Overview Page â€” THIN PAGE.
  */
-export default function DashboardHomePage() {
-  return (
-    <div>
-      {/* TODO: Compose feature components */}
-    </div>
-  );
+
+import { DashboardOverviewFeature } from '@/features/dashboard-overview';
+
+export default function AdminDashboardPage() {
+  return <DashboardOverviewFeature />;
 }
