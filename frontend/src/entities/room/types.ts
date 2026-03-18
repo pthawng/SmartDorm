@@ -14,4 +14,5 @@ export interface RoomData {
   monthly_price: number;
   status: RoomStatus;
   description: Nullable<string>;
+  images: string[];
 }

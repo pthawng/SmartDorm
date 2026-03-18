@@ -1,11 +1,9 @@
 /**
- * Workspace Switcher — composes workspace-switcher feature.
- * THIN PAGE: No business logic here.
+ * Workspace Switcher Page â€” THIN PAGE.
  */
+
+import { WorkspaceSwitcherFeature } from '@/features/workspace-switcher';
+
 export default function WorkspacesPage() {
-  return (
-    <div>
-      {/* TODO: Compose feature components */}
-    </div>
-  );
+  return <WorkspaceSwitcherFeature />;
 }

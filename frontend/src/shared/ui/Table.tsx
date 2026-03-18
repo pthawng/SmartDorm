@@ -18,6 +18,7 @@ export interface TableProps<T> {
   emptyMessage?: string;
   className?: string;
   onRowClick?: (row: T) => void;
+  rowClassName?: (row: T) => string | undefined;
 }
 
 /**
@@ -32,6 +33,7 @@ export function Table<T>({
   emptyMessage = 'No data found.',
   className,
   onRowClick,
+  rowClassName,
 }: TableProps<T>) {
   const alignClass = { left: 'text-left', center: 'text-center', right: 'text-right' };
 
@@ -87,6 +89,7 @@ export function Table<T>({
                     className={cn(
                       'group transition-colors hover:bg-slate-50/80',
                       onRowClick && 'cursor-pointer',
+                      rowClassName?.(row),
                     )}
                   >
                     {columns.map((col) => (

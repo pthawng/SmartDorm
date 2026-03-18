@@ -1,11 +1,9 @@
 /**
- * Property List — composes property-list feature.
- * THIN PAGE: No business logic here.
+ * Property List Page â€” THIN PAGE.
  */
+
+import { PropertyListFeature } from '@/features/property-list';
+
 export default function PropertyListPage() {
-  return (
-    <div>
-      {/* TODO: Compose feature components */}
-    </div>
-  );
+  return <PropertyListFeature />;
 }

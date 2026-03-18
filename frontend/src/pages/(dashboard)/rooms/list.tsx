@@ -1,11 +1,9 @@
 /**
- * Room List — composes room-management feature.
- * THIN PAGE: No business logic here.
+ * Room List Page â€” THIN PAGE.
  */
+
+import { RoomManagementFeature } from '@/features/room-management';
+
 export default function RoomListPage() {
-  return (
-    <div>
-      {/* TODO: Compose feature components */}
-    </div>
-  );
+  return <RoomManagementFeature />;
 }
