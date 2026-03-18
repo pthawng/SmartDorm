@@ -1,12 +1,16 @@
 /**
- * Register Page — composes auth-form feature.
- * THIN PAGE: No business logic here.
+ * Register Page — THIN PAGE. No business logic.
+ * Composes AuthCard + RegisterForm from auth-form feature.
  */
 
+import { AuthCard, RegisterForm, useRegister } from '@/features/auth-form';
+
 export default function RegisterPage() {
+  const { register, isLoading, error } = useRegister();
+
   return (
-    <div>
-      {/* TODO: Compose @/features/auth-form RegisterForm component */}
-    </div>
+    <AuthCard>
+      <RegisterForm onSubmit={register} isLoading={isLoading} error={error} />
+    </AuthCard>
   );
 }

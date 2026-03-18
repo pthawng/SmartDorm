@@ -1,13 +1,24 @@
 /**
  * Landing Page — composes property-search feature.
- * THIN PAGE: No business logic here.
+ * THIN PAGE: No business logic. Only composition.
  */
+
+import {
+  HeroSection,
+  StatsBar,
+  FeaturedProperties,
+  HowItWorks,
+  CTASection,
+} from '@/features/property-search';
 
 export default function LandingPage() {
   return (
-    <div>
-      {/* TODO: Compose @/features/property-search components */}
-      <h1>SmartDorm — Find Your Perfect Room</h1>
-    </div>
+    <>
+      <HeroSection />
+      <StatsBar />
+      <FeaturedProperties />
+      <HowItWorks />
+      <CTASection />
+    </>
   );
 }

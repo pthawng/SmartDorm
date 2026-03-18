@@ -1,11 +1,9 @@
 /**
- * Tenant Dashboard — composes tenant-dashboard feature.
- * THIN PAGE: No business logic here.
+ * Tenant Dashboard Page â€” THIN PAGE.
  */
-export default function TenantHomePage() {
-  return (
-    <div>
-      {/* TODO: Compose feature components */}
-    </div>
-  );
+
+import { TenantDashboardView } from '@/features/tenant-dashboard';
+
+export default function TenantDashboardPage() {
+  return <TenantDashboardView />;
 }

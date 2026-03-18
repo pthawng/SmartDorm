@@ -1,12 +1,10 @@
 /**
- * Room Detail Page — composes room-detail feature.
- * THIN PAGE: No business logic here.
+ * Room Detail Page — THIN PAGE. No business logic.
+ * Composes RoomDetailView from room-detail feature.
  */
 
+import { RoomDetailView } from '@/features/room-detail';
+
 export default function RoomDetailPage() {
-  return (
-    <div>
-      {/* TODO: Compose @/features/room-detail components */}
-    </div>
-  );
+  return <RoomDetailView />;
 }
