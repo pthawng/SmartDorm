@@ -53,9 +53,9 @@ export function useContractSignFlow() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       return { id: 'new-contract-id' };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
-      navigate(ROUTES.DASHBOARD.CONTRACTS);
+      navigate(ROUTES.DASHBOARD.CONTRACT_REVIEW(data.id));
     },
   });
 

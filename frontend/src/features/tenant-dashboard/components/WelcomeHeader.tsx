@@ -1,42 +1,20 @@
-import { Button } from '@/shared/ui';
-import { ROUTES } from '@/shared/config/routes';
-import { useNavigate } from 'react-router-dom';
-
 interface WelcomeHeaderProps {
-  tenantName: string;
+  name: string;
 }
 
-export function WelcomeHeader({ tenantName }: WelcomeHeaderProps) {
-  const navigate = useNavigate();
-  const today = new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date());
-
+export function WelcomeHeader({ name }: WelcomeHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-      <div>
-        <h1 className="text-3xl font-display font-bold text-slate-900">
-          Welcome back, {tenantName}
-        </h1>
-        <p className="mt-1 text-slate-500">{today}</p>
-      </div>
-
+    <div className="space-y-3 animate-in fade-in slide-in-from-top-6 duration-1000">
       <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          onClick={() => navigate(ROUTES.DASHBOARD.MAINTENANCE_LOG)}
-        >
-          Report Issue
-        </Button>
-        <Button
-          variant="primary"
-          onClick={() => navigate(ROUTES.DASHBOARD.INVOICES)}
-        >
-          Pay Rent
-        </Button>
+         <span className="h-px w-8 bg-primary-500/30" />
+         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary-600">Active Tenant Session</span>
       </div>
+      <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-tight drop-shadow-sm">
+        Welcome home, <br className="sm:hidden" /><span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900">{name}</span>
+      </h1>
+      <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] pl-1">
+        Personalized Experience Dashboard
+      </p>
     </div>
   );
 }

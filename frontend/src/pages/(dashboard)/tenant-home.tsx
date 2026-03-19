@@ -1,9 +1,5 @@
-/**
- * Tenant Dashboard Page — THIN PAGE.
- */
+import { TenantDashboardFeature } from '@/features/tenant-dashboard';
 
-import { TenantDashboardView } from '@/features/tenant-dashboard';
-
-export default function TenantDashboardPage() {
-  return <TenantDashboardView />;
+export default function TenantHomePage() {
+  return <TenantDashboardFeature />;
 }

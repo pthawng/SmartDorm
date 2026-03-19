@@ -1,35 +1,47 @@
-import type { FeaturedProperty } from '../types';
+import type { Property } from '../api/propertySearchApi';
 
 /**
- * Mock data for landing page — will be replaced by API calls.
+ * Mock data for landing page — migrated to the new high-fidelity Property model.
  */
-export const MOCK_FEATURED_PROPERTIES: FeaturedProperty[] = [
+export const MOCK_FEATURED_PROPERTIES: Property[] = [
   {
     id: '1',
-    name: 'The Modern Loft',
+    title: 'The Modern Loft',
+    description: 'Minimalist urban living with optimized space design.',
     city: 'Ho Chi Minh City',
-    imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&h=400&fit=crop',
-    roomCount: 24,
-    priceRange: '3.5M - 8M ₫/month',
+    address: 'District 1, HCMC',
+    thumbnail: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&fit=crop',
+    roomsCount: 24,
+    price: 3500000,
     rating: 4.8,
+    status: 'available',
+    featured: true,
   },
   {
     id: '2',
-    name: 'City Hub Residences',
+    title: 'City Hub Residences',
+    description: 'Prime location for students and young professionals.',
     city: 'Hanoi',
-    imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&h=400&fit=crop',
-    roomCount: 36,
-    priceRange: '2.5M - 6M ₫/month',
+    address: 'Cau Giay, Hanoi',
+    thumbnail: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&fit=crop',
+    roomsCount: 36,
+    price: 2500000,
     rating: 4.6,
+    status: 'available',
+    featured: true,
   },
   {
     id: '3',
-    name: 'Green Garden Dorm',
+    title: 'Green Garden Dorm',
+    description: 'Eco-friendly dormitory with shared garden spaces.',
     city: 'Da Nang',
-    imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop',
-    roomCount: 18,
-    priceRange: '2M - 4.5M ₫/month',
+    address: 'Son Tra, Da Nang',
+    thumbnail: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&fit=crop',
+    roomsCount: 18,
+    price: 2000000,
     rating: 4.9,
+    status: 'available',
+    featured: true,
   },
 ];
 

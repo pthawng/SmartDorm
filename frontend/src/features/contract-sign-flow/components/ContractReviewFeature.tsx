@@ -28,7 +28,7 @@ export function ContractReviewFeature() {
   };
 
   const handleGoDashboard = () => {
-    navigate(ROUTES.DASHBOARD.CONTRACTS);
+    navigate(ROUTES.DASHBOARD.TENANT_HOME);
   };
 
   if (isLoading) {

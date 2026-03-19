@@ -1,56 +1,109 @@
-import { Card, CardContent, Badge, Button } from '@/shared/ui';
-import type { FeaturedProperty } from '../types';
+import { MapPin, Star } from 'lucide-react';
+import { type MouseEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Property } from '../api/propertySearchApi';
+import { Card, CardContent } from '@/shared/ui/Card';
+import { Badge } from '@/shared/ui/Badge';
+import { Button } from '@/shared/ui/Button';
 
 interface PropertyCardProps {
-  property: FeaturedProperty;
-  onClick?: (id: string) => void;
+  property: Property;
 }
 
 /**
- * Property Card — displays a single featured property.
- * Pure presentational, props-driven.
+ * High-fidelity Property Card — logic-pure UI.
+ * Features Airbnb-inspired design with soft shadows and premium typography.
  */
-export function PropertyCard({ property, onClick }: PropertyCardProps) {
+export function PropertyCard({ property }: PropertyCardProps) {
+  const navigate = useNavigate();
+
+  const handleNavigate = () => {
+    navigate(`/properties/${property.id}`);
+  };
+
   return (
-    <Card interactive className="overflow-hidden">
-      {/* Image */}
-      <div className="relative h-48 w-full overflow-hidden">
-        <img
-          src={property.imageUrl}
-          alt={property.name}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-          loading="lazy"
+    <Card 
+      className="group overflow-hidden rounded-[2rem] border-none shadow-sm hover:shadow-xl transition-all duration-500 cursor-pointer bg-white"
+      onClick={handleNavigate}
+    >
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <img 
+          src={property.thumbnail} 
+          alt={property.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
-        <Badge variant="success" className="absolute right-3 top-3 shadow-sm">
-          {property.rating}★
-        </Badge>
+        <div className="absolute top-4 left-4 flex gap-2">
+          {property.featured && (
+            <Badge className="bg-primary-600 text-white border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-lg">
+              Featured
+            </Badge>
+          )}
+          <Badge className={cn(
+             "border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-lg",
+             property.status === 'available' ? "bg-emerald-500 text-white" : "bg-slate-500 text-white"
+          )}>
+            {property.status}
+          </Badge>
+        </div>
+        
+        {/* Favorite Button Placeholder */}
+        <button className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-rose-500 transition-all shadow-sm border border-white/30">
+          <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+          </svg>
+        </button>
       </div>
 
-      <CardContent className="p-5">
-        <h3 className="text-base font-semibold text-slate-900 font-display">{property.name}</h3>
-
-        <div className="mt-1.5 flex items-center gap-1.5 text-sm text-slate-500">
-          <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0 1 15 0Z" />
-          </svg>
-          {property.city}
+      <CardContent className="p-6 space-y-4">
+        <div className="flex justify-between items-start gap-4">
+          <h3 className="text-lg font-bold text-slate-900 line-clamp-1 group-hover:text-primary-600 transition-colors">
+            {property.title}
+          </h3>
+          <div className="flex items-center gap-1 shrink-0">
+            <Star className="w-4 h-4 text-amber-400 fill-current" />
+            <span className="text-sm font-bold text-slate-900">{property.rating}</span>
+          </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{property.roomCount} rooms</p>
-            <p className="text-sm font-semibold text-primary-700">{property.priceRange}</p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-slate-500 min-w-0">
+            <MapPin className="w-4 h-4 shrink-0" />
+            <span className="text-sm font-medium truncate">{property.city}</span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onClick?.(property.id)}
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="rounded-full px-5 border-slate-200 hover:border-primary-600 hover:text-primary-600 transition-all font-bold shrink-0"
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              handleNavigate();
+            }}
           >
-            View Details
+            View
           </Button>
+        </div>
+
+        <div className="pt-2 flex items-end justify-between border-t border-slate-50 mt-4">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Starting from</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-black text-slate-900 tracking-tight">
+                {new Intl.NumberFormat('vi-VN').format(property.price)}
+              </span>
+              <span className="text-xs font-bold text-slate-500">vnđ/mo</span>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-slate-400 italic">
+            {property.roomsCount} rooms total
+          </span>
         </div>
       </CardContent>
     </Card>
   );
+}
+
+// Utility to handle dynamic classes
+function cn(...classes: any[]) {
+  return classes.filter(Boolean).join(' ');
 }

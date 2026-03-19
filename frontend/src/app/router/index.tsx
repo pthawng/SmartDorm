@@ -7,6 +7,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { lazy } from 'react';
 
 // ── Layouts ──────────────────────────────────────────────────
+const RootLayout      = lazy(() => import('@/app/layout/root-layout').then(m => ({ default: m.RootLayout })));
 const MarketingLayout = lazy(() => import('@/pages/(marketing)/_layout'));
 const DashboardLayout = lazy(() => import('@/pages/(dashboard)/_layout'));
 
@@ -31,8 +32,8 @@ const ContractListPage    = lazy(() => import('@/pages/(dashboard)/contracts/lis
 const ContractApplyPage   = lazy(() => import('@/pages/(dashboard)/contracts/apply'));
 const ContractReviewPage  = lazy(() => import('@/pages/(dashboard)/contracts/review'));
 const InvoiceListPage     = lazy(() => import('@/pages/(dashboard)/invoices/list'));
-const InvoiceDetailPage   = lazy(() => import('@/pages/(dashboard)/invoices/detail'));
-const InvoicePayPage      = lazy(() => import('@/pages/(dashboard)/invoices/pay'));
+const InvoiceDetailPage   = lazy(() => import('@/pages/(dashboard)/invoices/detail.tsx'));
+const InvoicePayPage      = lazy(() => import('@/pages/(dashboard)/invoices/pay.tsx'));
 const MaintenanceListPage   = lazy(() => import('@/pages/(dashboard)/maintenance/list'));
 const MaintenanceNewPage    = lazy(() => import('@/pages/(dashboard)/maintenance/new'));
 const MaintenanceDetailPage = lazy(() => import('@/pages/(dashboard)/maintenance/detail'));
@@ -46,49 +47,54 @@ const RenterDetailPage  = lazy(() => import('@/pages/(dashboard)/renters/detail'
 const NotFoundPage = lazy(() => import('@/pages/not-found'));
 
 export const router = createBrowserRouter([
-  // Marketing (Public)
   {
-    element: <MarketingLayout />,
+    element: <RootLayout />,
     children: [
-      { path: '/',               element: <LandingPage /> },
-      { path: '/search',         element: <SearchPage /> },
-      { path: '/properties/:id', element: <PropertyDetail /> },
-      { path: '/rooms/:id',      element: <RoomDetail /> },
+      // Marketing (Public)
+      {
+        element: <MarketingLayout />,
+        children: [
+          { path: '/',               element: <LandingPage /> },
+          { path: '/search',         element: <SearchPage /> },
+          { path: '/properties/:id', element: <PropertyDetail /> },
+          { path: '/rooms/:id',      element: <RoomDetail /> },
+        ],
+      },
+
+      // Auth
+      { path: '/login',    element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+
+      // Dashboard (Authenticated)
+      {
+        path: '/dashboard',
+        element: <DashboardLayout />,
+        children: [
+          { index: true,                   element: <DashboardHome /> },
+          { path: 'tenant',               element: <TenantHome /> },
+          { path: 'workspaces',           element: <WorkspacesPage /> },
+          { path: 'properties',           element: <PropertyListPage /> },
+          { path: 'rooms',                element: <RoomListPage /> },
+          { path: 'rooms/:id/edit',       element: <RoomEditPage /> },
+          { path: 'contracts',            element: <ContractListPage /> },
+          { path: 'contracts/new',        element: <ContractApplyPage /> },
+          { path: 'contracts/:id/review', element: <ContractReviewPage /> },
+          { path: 'invoices',             element: <InvoiceListPage /> },
+          { path: 'invoices/:id',         element: <InvoiceDetailPage /> },
+          { path: 'invoices/:id/pay',     element: <InvoicePayPage /> },
+          { path: 'maintenance',          element: <MaintenanceListPage /> },
+          { path: 'maintenance/new',      element: <MaintenanceNewPage /> },
+          { path: 'maintenance/:id',      element: <MaintenanceDetailPage /> },
+          { path: 'settings/profile',     element: <SettingsProfilePage /> },
+          { path: 'settings/workspace',   element: <SettingsWorkspacePage /> },
+          { path: 'settings/team',        element: <SettingsTeamPage /> },
+          { path: 'renters',              element: <RenterListPage /> },
+          { path: 'renters/:id',          element: <RenterDetailPage /> },
+        ],
+      },
+
+      // Catch-all
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
-
-  // Auth
-  { path: '/login',    element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
-
-  // Dashboard (Authenticated)
-  {
-    path: '/dashboard',
-    element: <DashboardLayout />,
-    children: [
-      { index: true,                   element: <DashboardHome /> },
-      { path: 'tenant',               element: <TenantHome /> },
-      { path: 'workspaces',           element: <WorkspacesPage /> },
-      { path: 'properties',           element: <PropertyListPage /> },
-      { path: 'rooms',                element: <RoomListPage /> },
-      { path: 'rooms/:id/edit',       element: <RoomEditPage /> },
-      { path: 'contracts',            element: <ContractListPage /> },
-      { path: 'contracts/new',        element: <ContractApplyPage /> },
-      { path: 'contracts/:id/review', element: <ContractReviewPage /> },
-      { path: 'invoices',             element: <InvoiceListPage /> },
-      { path: 'invoices/:id',         element: <InvoiceDetailPage /> },
-      { path: 'invoices/:id/pay',     element: <InvoicePayPage /> },
-      { path: 'maintenance',          element: <MaintenanceListPage /> },
-      { path: 'maintenance/new',      element: <MaintenanceNewPage /> },
-      { path: 'maintenance/:id',      element: <MaintenanceDetailPage /> },
-      { path: 'settings/profile',     element: <SettingsProfilePage /> },
-      { path: 'settings/workspace',   element: <SettingsWorkspacePage /> },
-      { path: 'settings/team',        element: <SettingsTeamPage /> },
-      { path: 'renters',              element: <RenterListPage /> },
-      { path: 'renters/:id',          element: <RenterDetailPage /> },
-    ],
-  },
-
-  // Catch-all
-  { path: '*', element: <NotFoundPage /> },
 ]);

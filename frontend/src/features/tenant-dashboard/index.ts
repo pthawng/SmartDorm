@@ -1,2 +1,2 @@
-export { TenantDashboardView } from './components/TenantDashboardView';
-export { useTenantDashboard } from './hooks';
+export * from './components/TenantDashboardFeature';
+export * from './hooks/useTenantDashboard';
