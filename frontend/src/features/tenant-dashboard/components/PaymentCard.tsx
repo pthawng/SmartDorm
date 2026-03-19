@@ -1,6 +1,8 @@
-import { Card, Button, Badge } from '@/shared/ui';
+import { Card, Button } from '@/shared/ui';
 import { DashboardPaymentInfo } from '../types';
 import { InvoiceStatus } from '@/entities/invoice/constants';
+import { CreditCard, Calendar, ArrowRight } from 'lucide-react';
+import { StatusDot } from '@/shared/ui/StatusDot';
 
 interface PaymentCardProps {
   payment: DashboardPaymentInfo;
@@ -12,70 +14,72 @@ const vndFormatter = new Intl.NumberFormat('vi-VN', {
   currency: 'VND',
 });
 
+/**
+ * Airbnb-style 'Payment Spotlight' — emphasizes financial status & actions.
+ * Large format cards with clear status indicators and bold CTAs.
+ */
 export function PaymentCard({ payment, onPay }: PaymentCardProps) {
   const isOverdue = payment.status === InvoiceStatus.OVERDUE;
+  const isPending = payment.status === InvoiceStatus.PENDING;
 
   return (
-    <Card className={`relative p-10 border-none shadow-premium hover:shadow-hover transition-all duration-700 rounded-[32px] overflow-hidden group ${
-      isOverdue ? 'bg-rose-50/30' : 'bg-white'
-    }`}>
-      {/* Visual background indicator */}
-      <div className={`absolute top-0 right-0 w-32 h-32 blur-3xl rounded-full -mr-16 -mt-16 transition-opacity duration-700 ${
-        isOverdue ? 'bg-rose-200 opacity-60' : 'bg-primary-100 opacity-20'
-      }`} />
-
-      <div className="relative z-10 space-y-10">
+    <Card className="relative p-10 border-none shadow-[0_32px_80px_-16px_rgba(0,0,0,0.06)] rounded-[2.5rem] bg-white group transition-all duration-500 hover:shadow-[0_48px_100px_-16px_rgba(0,0,0,0.1)]">
+      <div className="space-y-10">
         <header className="flex items-start justify-between">
-          <div className="space-y-2">
-            <span className={`text-[10px] font-black uppercase tracking-[0.3em] block ${
-              isOverdue ? 'text-rose-500' : 'text-slate-400'
-            }`}>
-              {isOverdue ? 'Urgent Settlement' : 'Upcoming Rent'}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block">
+              Financial Status
             </span>
-            <div className="flex items-baseline gap-2">
-              <p className="text-4xl font-black text-slate-900 tabular-nums tracking-tighter">
-                {vndFormatter.format(payment.nextAmount).replace(' ₫', '')}
-              </p>
-              <span className="text-sm font-black text-slate-400 uppercase tracking-widest">VND</span>
+            <div className="flex items-center gap-3">
+              <StatusDot 
+                status={isOverdue ? 'error' : isPending ? 'warning' : 'success'} 
+                pulse={isOverdue} 
+              />
+              <span className={`text-sm font-black uppercase tracking-widest ${
+                isOverdue ? 'text-rose-500' : isPending ? 'text-amber-500' : 'text-emerald-500'
+              }`}>
+                {payment.status}
+              </span>
             </div>
           </div>
           
-          <div className="flex flex-col items-end gap-2">
-            {isOverdue ? (
-              <Badge variant="error" className="animate-pulse px-4 py-1.5 font-black text-[9px] uppercase tracking-widest shadow-lg shadow-rose-100 ring-4 ring-white border-none">Urgent</Badge>
-            ) : (
-              <Badge variant="warning" className="px-4 py-1.5 font-black text-[9px] uppercase tracking-widest ring-4 ring-white border-none opacity-80">Pending</Badge>
-            )}
+          <div className="p-4 bg-slate-50 rounded-2xl text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
+            <CreditCard className="w-5 h-5" />
           </div>
         </header>
 
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-             <div className="p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-1">
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Due Date</span>
-                <span className="text-xs font-black text-slate-900 uppercase tracking-widest">{payment.dueDate}</span>
-             </div>
-             <div className="p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-1">
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Method</span>
-                <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Auto-Debit</span>
-             </div>
+        <div className="space-y-1">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Due</span>
+          <p className="text-4xl font-black text-slate-900 tracking-tighter tabular-nums leading-none">
+            {vndFormatter.format(payment.nextAmount)}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+          <div className="flex items-center gap-4 p-5 bg-slate-50/50 rounded-2xl border border-slate-50">
+            <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-slate-400 shadow-sm">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Next Due Date</span>
+              <span className="text-sm font-black text-slate-900 uppercase tracking-widest">
+                {payment.dueDate}
+              </span>
+            </div>
           </div>
 
           <Button 
             variant="primary" 
             fullWidth 
             onClick={onPay}
-            className={`h-20 text-[10px] font-black uppercase tracking-[0.3em] transition-all duration-500 group-hover:scale-[1.02] shadow-2xl ${
-              isOverdue ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200' : 'bg-slate-900 hover:bg-slate-800 shadow-primary-100'
+            className={`h-16 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] group-hover:scale-[1.02] transition-all shadow-xl ${
+              isOverdue ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200' : 'bg-slate-900 hover:bg-slate-800'
             }`}
           >
-            {isOverdue ? 'Pay Immediately' : 'Secure Checkout'}
+            <span className="flex items-center gap-2">
+              Pay Now <ArrowRight className="w-3 h-3 pt-0.5" />
+            </span>
           </Button>
-        </div>
-
-        <div className="pt-2 flex items-center justify-center gap-2 opacity-30 grayscale group-hover:opacity-60 transition-all duration-700">
-           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-           <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-900">256-Bit SSL Secured Session</span>
         </div>
       </div>
     </Card>

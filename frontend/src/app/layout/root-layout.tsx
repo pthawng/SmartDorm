@@ -37,7 +37,7 @@ export function RootLayout() {
           <div className={cn(
              "mx-auto animate-in fade-in duration-500 flex-1 w-full",
              isDashboard 
-               ? (showSidebar ? "max-w-7xl py-8 px-6 lg:px-12" : "max-w-6xl py-8 px-6 lg:px-12") 
+               ? (isTenantPath ? "max-w-none p-0" : (showSidebar ? "max-w-7xl py-8 px-6 lg:px-12" : "max-w-6xl py-8 px-6 lg:px-12")) 
                : "max-w-none"
           )}>
             <Outlet />
