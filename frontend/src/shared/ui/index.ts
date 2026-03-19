@@ -8,6 +8,8 @@ export type { InputProps, TextareaProps } from './Input';
 export { Select } from './Select';
 export type { SelectProps } from './Select';
 
+export { Divider } from './Divider';
+
 
 // ── Layout ───────────────────────────────────────────────────
 export {

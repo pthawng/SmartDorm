@@ -1,11 +1,9 @@
+import { ContractReviewFeature } from '@/features/contract-sign-flow/components/ContractReviewFeature';
+
 /**
- * Contract Review — composes contract-sign-flow feature.
- * THIN PAGE: No business logic here.
+ * Thin page shell for the Contract Review / Signature Portal.
+ * Composite of the ContractReviewFeature.
  */
 export default function ContractReviewPage() {
-  return (
-    <div>
-      {/* TODO: Compose feature components */}
-    </div>
-  );
+  return <ContractReviewFeature />;
 }

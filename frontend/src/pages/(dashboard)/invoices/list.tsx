@@ -1,11 +1,9 @@
-/**
- * Invoice List — composes invoice-table feature.
- * THIN PAGE: No business logic here.
- */
+import { InvoiceTable } from '@/features/invoice-table';
+
 export default function InvoiceListPage() {
   return (
-    <div>
-      {/* TODO: Compose feature components */}
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <InvoiceTable />
     </div>
   );
 }

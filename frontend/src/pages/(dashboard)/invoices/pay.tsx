@@ -1,11 +1,5 @@
-/**
- * Invoice Payment — composes invoice-payment feature.
- * THIN PAGE: No business logic here.
- */
+import { InvoicePaymentFeature } from '@/features/invoice-payment';
+
 export default function InvoicePayPage() {
-  return (
-    <div>
-      {/* TODO: Compose feature components */}
-    </div>
-  );
+  return <InvoicePaymentFeature />;
 }

@@ -16,4 +16,10 @@ export interface ContractData {
   monthly_rent: number;
   deposit_amount: number;
   terms_notes: Nullable<string>;
+  tenant: {
+    full_name: string;
+    phone: string;
+    id_number: string;
+    email?: string;
+  };
 }

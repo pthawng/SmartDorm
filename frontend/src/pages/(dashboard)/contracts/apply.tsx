@@ -1,11 +1,13 @@
+import { ContractSignFlowFeature } from '@/features/contract-sign-flow';
+
 /**
- * Contract Application — composes contract-sign-flow feature.
- * THIN PAGE: No business logic here.
+ * THIN PAGE â€” Contract Application Flow
+ * Multi-step process for creating a new lease agreement.
  */
 export default function ContractApplyPage() {
   return (
-    <div>
-      {/* TODO: Compose feature components */}
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <ContractSignFlowFeature />
     </div>
   );
 }

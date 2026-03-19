@@ -1,11 +1,5 @@
-/**
- * Invoice Detail — composes invoice-table feature.
- * THIN PAGE: No business logic here.
- */
+import { InvoiceDetailFeature } from '@/features/invoice-table/components/InvoiceDetailFeature';
+
 export default function InvoiceDetailPage() {
-  return (
-    <div>
-      {/* TODO: Compose feature components */}
-    </div>
-  );
+  return <InvoiceDetailFeature />;
 }

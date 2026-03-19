@@ -1,21 +1,19 @@
-/**
- * Root Layout — global shell with sidebar and header.
- * Used as a placeholder; to be designed with Stitch UI.
- */
-
 import { Outlet } from 'react-router-dom';
+import { Sidebar } from '@/shared/ui/sidebar';
 
 export function RootLayout() {
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar — will be composed from features */}
-      <aside className="hidden w-64 border-r bg-gray-50 lg:block">
-        {/* TODO: Sidebar navigation */}
-      </aside>
+    <div className="flex min-h-screen bg-slate-50/50">
+      {/* Sidebar - Desktop */}
+      <div className="hidden lg:block">
+        <Sidebar />
+      </div>
 
       {/* Main content area */}
-      <main className="flex-1 overflow-auto">
-        <Outlet />
+      <main className="flex-1 overflow-auto h-screen relative">
+        <div className="mx-auto max-w-7xl animate-in fade-in duration-500">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
