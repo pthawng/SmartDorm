@@ -84,19 +84,23 @@ export function PropertyCard({ property }: PropertyCardProps) {
           </Button>
         </div>
 
-        <div className="pt-2 flex items-end justify-between border-t border-slate-50 mt-4">
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Starting from</span>
+        <div className="pt-4 flex items-center justify-between border-t border-slate-100/60 mt-2">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Starting from</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-black text-slate-900 tracking-tight">
+              <span className="text-xl font-black text-primary-600 tracking-tight">
                 {new Intl.NumberFormat('vi-VN').format(property.price)}
               </span>
-              <span className="text-xs font-bold text-slate-500">vnđ/mo</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase">vnđ/mo</span>
             </div>
           </div>
-          <span className="text-xs font-bold text-slate-400 italic">
-            {property.roomsCount} rooms total
-          </span>
+          
+          <div className="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100/50 flex flex-col items-center justify-center shrink-0">
+            <span className="text-xs font-black text-slate-900 leading-none">
+              {property.roomsCount}
+            </span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">Rooms</span>
+          </div>
         </div>
       </CardContent>
     </Card>
