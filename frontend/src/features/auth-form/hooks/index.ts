@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/services/endpoints/auth.api';
 import { ROUTES } from '@/shared/config/routes';
@@ -13,6 +13,7 @@ export function useLogin() {
   const [error, setError] = useState<string | null>(null);
   const { hydrateAuth } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const login = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -24,8 +25,9 @@ export function useLogin() {
       // 2. Hydrate session (POST /auth/refresh -> gets User + AT)
       await hydrateAuth();
 
-      // 3. Navigate to dashboard
-      navigate(ROUTES.DASHBOARD.HOME);
+      // 3. Navigate back to origin or home
+      const from = (location.state as any)?.from?.pathname || ROUTES.DASHBOARD.HOME;
+      navigate(from, { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -44,6 +46,7 @@ export function useRegister() {
   const [error, setError] = useState<string | null>(null);
   const { hydrateAuth } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const register = async (data: RegisterFormData) => {
     setIsLoading(true);
@@ -59,8 +62,9 @@ export function useRegister() {
       // 2. Call hydrateAuth (POST /auth/refresh -> gets Access Token)
       await hydrateAuth();
 
-      // 3. User is now authenticated, redirect to dashboard
-      navigate(ROUTES.DASHBOARD.HOME);
+      // 3. User is now authenticated, redirect to origin or dashboard
+      const from = (location.state as any)?.from?.pathname || ROUTES.DASHBOARD.HOME;
+      navigate(from, { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {

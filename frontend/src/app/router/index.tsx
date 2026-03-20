@@ -5,6 +5,8 @@
 
 import { createBrowserRouter } from 'react-router-dom';
 import { lazy } from 'react';
+import { GuestRoute } from '@/shared/ui/guest-route';
+import { ProtectedRoute } from '@/shared/ui/protected-route';
 
 // ── Layouts ──────────────────────────────────────────────────
 const RootLayout      = lazy(() => import('@/app/layout/root-layout').then(m => ({ default: m.RootLayout })));
@@ -20,6 +22,7 @@ const RoomDetail      = lazy(() => import('@/pages/(marketing)/room-detail'));
 // ── Auth Pages ───────────────────────────────────────────────
 const LoginPage       = lazy(() => import('@/pages/(auth)/login'));
 const RegisterPage    = lazy(() => import('@/pages/(auth)/register'));
+const BecomeLandlordPage = lazy(() => import('@/pages/(auth)/become-landlord'));
 
 // ── Dashboard Pages ──────────────────────────────────────────
 const DashboardHome       = lazy(() => import('@/pages/(dashboard)/home'));
@@ -67,8 +70,30 @@ export const router = createBrowserRouter([
       },
 
       // Auth
-      { path: '/login',    element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
+      { 
+        path: '/login',    
+        element: (
+          <GuestRoute>
+            <LoginPage />
+          </GuestRoute>
+        ) 
+      },
+      { 
+        path: '/register', 
+        element: (
+          <GuestRoute>
+            <RegisterPage />
+          </GuestRoute>
+        ) 
+      },
+      { 
+        path: '/become-landlord', 
+        element: (
+          <ProtectedRoute>
+            <BecomeLandlordPage />
+          </ProtectedRoute>
+        ) 
+      },
 
       // Dashboard (Authenticated)
       {
