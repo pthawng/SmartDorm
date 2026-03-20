@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getContractById, signContract } from '../services/contract-api';
+import { getContractById, payDeposit } from '@/features/contract-sign-flow/services/contract-api';
 
-export function useContractReview(contractId: string) {
+export function useDepositPayment(contractId: string) {
   const queryClient = useQueryClient();
 
-  // Fetch contract data
+  // Fetch contract to get deposit amount
   const { 
     data: contract, 
     isLoading, 
@@ -15,10 +15,11 @@ export function useContractReview(contractId: string) {
     enabled: !!contractId,
   });
 
-  // Sign contract mutation
+  // Payment mutation
   const mutation = useMutation({
-    mutationFn: () => signContract(contractId),
+    mutationFn: () => payDeposit(contractId),
     onSuccess: () => {
+      // Invalidate both lists and specific items
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
     },
@@ -30,6 +31,6 @@ export function useContractReview(contractId: string) {
     isError,
     isSubmitting: mutation.isPending,
     isSuccess: mutation.isSuccess,
-    onSign: mutation.mutate,
+    onPay: mutation.mutate,
   };
 }

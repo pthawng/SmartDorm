@@ -1,16 +1,22 @@
 import { ContractData } from '@/entities/contract';
 
 /**
- * Mocks the API call to activate a contract.
- * In a real app, this would be PATCH /contracts/{id}/activate
+ * Mocks the API call to sign a contract.
+ * In a real app, this would be PATCH /contracts/{id}/sign
  */
-export async function activateContract(contractId: string): Promise<void> {
-  console.log('Activating contract:', contractId);
-  
-  // Simulate network delay
+export async function signContract(contractId: string): Promise<void> {
+  console.log('Signing contract:', contractId);
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  return;
+}
+
+/**
+ * Mocks the API call to pay deposit and activate a contract.
+ * In a real app, this would be PATCH /contracts/{id}/pay-deposit
+ */
+export async function payDeposit(contractId: string): Promise<void> {
+  console.log('Paying deposit for contract:', contractId);
   await new Promise((resolve) => setTimeout(resolve, 2000));
-  
-  // MOCK SUCCESS
   return;
 }
 

@@ -30,6 +30,9 @@ const RoomListPage        = lazy(() => import('@/pages/(dashboard)/rooms/list'))
 const RoomEditPage        = lazy(() => import('@/pages/(dashboard)/rooms/edit'));
 const ContractListPage    = lazy(() => import('@/pages/(dashboard)/contracts/list'));
 const ContractApplyPage   = lazy(() => import('@/pages/(dashboard)/contracts/apply'));
+const ContractCreatePage  = lazy(() => import('@/pages/(dashboard)/contracts/create'));
+const PayDepositPage     = lazy(() => import('@/pages/(dashboard)/contracts/pay-deposit'));
+const ContractConfirmPage = lazy(() => import('@/pages/(dashboard)/contracts/confirm'));
 const ContractReviewPage  = lazy(() => import('@/pages/(dashboard)/contracts/review'));
 const InvoiceListPage     = lazy(() => import('@/pages/(dashboard)/invoices/list'));
 const InvoiceDetailPage   = lazy(() => import('@/pages/(dashboard)/invoices/detail.tsx'));
@@ -43,6 +46,7 @@ const SettingsTeamPage      = lazy(() => import('@/pages/(dashboard)/settings/te
 const RenterListPage    = lazy(() => import('@/pages/(dashboard)/renters/list'));
 const RenterDetailPage  = lazy(() => import('@/pages/(dashboard)/renters/detail'));
 const MessagesPage      = lazy(() => import('@/pages/(dashboard)/messages'));
+const ApplicationsPage  = lazy(() => import('@/pages/(dashboard)/applications/list'));
 
 // ── Error Page ───────────────────────────────────────────────
 const NotFoundPage = lazy(() => import('@/pages/not-found'));
@@ -79,6 +83,9 @@ export const router = createBrowserRouter([
           { path: 'rooms/:id/edit',       element: <RoomEditPage /> },
           { path: 'contracts',            element: <ContractListPage /> },
           { path: 'contracts/new',        element: <ContractApplyPage /> },
+          { path: 'contracts/issue',      element: <ContractCreatePage /> },
+          { path: 'contracts/:id/pay-deposit', element: <PayDepositPage /> },
+          { path: 'contracts/:id/confirm', element: <ContractConfirmPage /> },
           { path: 'contracts/:id/review', element: <ContractReviewPage /> },
           { path: 'invoices',             element: <InvoiceListPage /> },
           { path: 'invoices/:id',         element: <InvoiceDetailPage /> },
@@ -92,6 +99,7 @@ export const router = createBrowserRouter([
           { path: 'renters',              element: <RenterListPage /> },
           { path: 'renters/:id',          element: <RenterDetailPage /> },
           { path: 'messages',             element: <MessagesPage /> },
+          { path: 'applications',         element: <ApplicationsPage /> },
         ],
       },
 

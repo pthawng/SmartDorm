@@ -20,15 +20,15 @@ export function ContractReviewFeature() {
     isError, 
     isSubmitting,
     isSuccess,
-    onActivate 
+    onSign 
   } = useContractReview(id || '');
 
   const handleEdit = () => {
     navigate(ROUTES.DASHBOARD.CONTRACT_APPLY);
   };
 
-  const handleGoDashboard = () => {
-    navigate(ROUTES.DASHBOARD.TENANT_HOME);
+  const handleProceedToPayment = () => {
+    navigate(ROUTES.DASHBOARD.CONTRACT_PAY_DEPOSIT(id || ''));
   };
 
   if (isLoading) {
@@ -52,18 +52,20 @@ export function ContractReviewFeature() {
         </div>
         
         <div className="space-y-3">
-          <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Contract Executed</h2>
-          <p className="text-slate-500 font-medium"> The lease agreement is now legally active. All parties have been notified via secure digital channels.</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Contract Signed</h2>
+          <p className="text-slate-500 font-medium">Agreement executed successfully. Your lease will be **activated** upon confirmation of the security deposit.</p>
         </div>
 
-        <Card className="p-6 bg-slate-50 border-slate-200">
-           <div className="flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-              <span>Reference ID</span>
-              <span className="text-slate-900">{id?.substring(0, 8).toUpperCase()}</span>
+        <Card className="p-8 bg-slate-900 text-white rounded-[2rem] shadow-2xl shadow-slate-200">
+           <div className="space-y-6">
+              <div className="space-y-1">
+                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">Next Milestone</span>
+                 <h4 className="text-xl font-display font-black uppercase tracking-tighter">Security Deposit</h4>
+              </div>
+              <Button variant="primary" fullWidth className="bg-white text-slate-900 hover:bg-emerald-50 h-14 rounded-2xl" onClick={handleProceedToPayment}>
+                 Proceed to Payment
+              </Button>
            </div>
-           <Button variant="primary" fullWidth onClick={handleGoDashboard}>
-              Return to Contract Portal
-           </Button>
         </Card>
       </div>
     );
@@ -97,16 +99,16 @@ export function ContractReviewFeature() {
              </div>
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1">
-                  <RoomInfo roomId={contract.room_id} />
+                   <RoomInfo roomId={contract.room_id} />
                 </div>
                 <div className="lg:col-span-2">
-                  <ContractSummary 
-                    rent={contract.monthly_rent} 
-                    deposit={contract.deposit_amount}
-                    startDate={contract.start_date}
-                    endDate={contract.end_date}
-                    onEdit={handleEdit}
-                  />
+                   <ContractSummary 
+                     rent={contract.monthly_rent} 
+                     deposit={contract.deposit_amount}
+                     startDate={contract.start_date}
+                     endDate={contract.end_date}
+                     onEdit={handleEdit}
+                   />
                 </div>
              </div>
           </section>
@@ -131,7 +133,7 @@ export function ContractReviewFeature() {
                <SignatureSection 
                  isAgreed={isAgreed}
                  onAgreedChange={setIsAgreed}
-                 onSubmit={onActivate}
+                 onSubmit={onSign}
                  isSubmitting={isSubmitting}
                />
              </div>

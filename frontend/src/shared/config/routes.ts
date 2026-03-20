@@ -20,6 +20,7 @@ export const ROUTES = {
     TENANT_HOME: '/dashboard/tenant',
     WORKSPACES: '/dashboard/workspaces',
     MESSAGES: '/dashboard/messages',
+    APPLICATIONS: '/dashboard/applications',
 
     // Properties
     PROPERTIES: '/dashboard/properties',
@@ -31,6 +32,9 @@ export const ROUTES = {
     // Contracts
     CONTRACTS: '/dashboard/contracts',
     CONTRACT_APPLY: '/dashboard/contracts/new',
+    CONTRACT_ISSUE: '/dashboard/contracts/issue',
+    CONTRACT_PAY_DEPOSIT: (id: string) => `/dashboard/contracts/${id}/pay-deposit`,
+    CONTRACT_CONFIRM: (id: string) => `/dashboard/contracts/${id}/confirm`,
     CONTRACT_REVIEW: (id: string) => `/dashboard/contracts/${id}/review`,
 
     // Invoices
