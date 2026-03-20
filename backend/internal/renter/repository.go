@@ -33,8 +33,8 @@ func NewRepository(db *db.Database) Repository {
 
 func (r *repository) Create(ctx context.Context, workspaceID uuid.UUID, renter *Renter) error {
 	const q = `
-		INSERT INTO renters (workspace_id, full_name, phone, email, id_number, date_of_birth, emergency_contact_name, emergency_contact_phone)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO renters (workspace_id, full_name, phone, email, id_number, date_of_birth, emergency_contact_name, emergency_contact_phone, budget, preferred_location, verified, rating)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		RETURNING id, created_at, updated_at, deleted_at`
 
 	return r.db.GetContext(ctx, renter, q, 
@@ -45,12 +45,16 @@ func (r *repository) Create(ctx context.Context, workspaceID uuid.UUID, renter *
 		renter.IDNumber, 
 		renter.DateOfBirth, 
 		renter.EmergencyContactName, 
-		renter.EmergencyContactPhone)
+		renter.EmergencyContactPhone,
+		renter.Budget,
+		renter.PreferredLocation,
+		renter.Verified,
+		renter.Rating)
 }
 
 func (r *repository) GetByID(ctx context.Context, workspaceID, id uuid.UUID) (*Renter, error) {
 	const q = `
-		SELECT id, workspace_id, user_id, full_name, phone, email, id_number, date_of_birth, emergency_contact_name, emergency_contact_phone, created_at, updated_at, deleted_at
+		SELECT id, workspace_id, user_id, full_name, phone, email, id_number, date_of_birth, emergency_contact_name, emergency_contact_phone, budget, preferred_location, verified, rating, created_at, updated_at, deleted_at
 		FROM renters
 		WHERE id = $1 AND workspace_id = $2 AND deleted_at IS NULL`
 
@@ -86,7 +90,7 @@ func (r *repository) List(ctx context.Context, workspaceID uuid.UUID, params pag
 	}
 
 	// 2. Fetch paginated rows
-	qRows := `SELECT id, workspace_id, user_id, full_name, phone, email, id_number, date_of_birth, emergency_contact_name, emergency_contact_phone, created_at, updated_at, deleted_at ` + 
+	qRows := `SELECT id, workspace_id, user_id, full_name, phone, email, id_number, date_of_birth, emergency_contact_name, emergency_contact_phone, budget, preferred_location, verified, rating, created_at, updated_at, deleted_at ` + 
 		queryBase + 
 		` ORDER BY created_at DESC LIMIT $` + string(rune('0'+argIdx)) + ` OFFSET $` + string(rune('0'+argIdx+1))
 	
@@ -112,7 +116,7 @@ func (r *repository) Update(ctx context.Context, workspaceID, id uuid.UUID, upda
 	
 	i := 1
 	for k, v := range updates {
-		if k == "full_name" || k == "phone" || k == "email" || k == "id_number" || k == "date_of_birth" || k == "emergency_contact_name" || k == "emergency_contact_phone" {
+		if k == "full_name" || k == "phone" || k == "email" || k == "id_number" || k == "date_of_birth" || k == "emergency_contact_name" || k == "emergency_contact_phone" || k == "budget" || k == "preferred_location" || k == "verified" || k == "rating" {
 			setClauses = append(setClauses, k+" = $"+string(rune('0'+i)))
 			args = append(args, v)
 			i++
@@ -121,7 +125,7 @@ func (r *repository) Update(ctx context.Context, workspaceID, id uuid.UUID, upda
 
 	setClauses = append(setClauses, "updated_at = NOW()")
 	
-	query += strings.Join(setClauses, ", ") + " WHERE id = $" + string(rune('0'+i)) + " AND workspace_id = $" + string(rune('0'+i+1)) + " AND deleted_at IS NULL RETURNING id, workspace_id, user_id, full_name, phone, email, id_number, date_of_birth, emergency_contact_name, emergency_contact_phone, created_at, updated_at, deleted_at"
+	query += strings.Join(setClauses, ", ") + " WHERE id = $" + string(rune('0'+i)) + " AND workspace_id = $" + string(rune('0'+i+1)) + " AND deleted_at IS NULL RETURNING id, workspace_id, user_id, full_name, phone, email, id_number, date_of_birth, emergency_contact_name, emergency_contact_phone, budget, preferred_location, verified, rating, created_at, updated_at, deleted_at"
 	args = append(args, id, workspaceID)
 
 	var renter Renter

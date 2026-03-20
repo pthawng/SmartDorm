@@ -60,23 +60,20 @@ func (h *Handler) Login(c *gin.Context) {
 	response.OK(c, resp)
 }
 
-func (h *Handler) Token(c *gin.Context) {
+func (h *Handler) SwitchContext(c *gin.Context) {
 	var req TokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, err)
 		return
 	}
 
-	// Must extract user ID from the transient login context or a short-lived token.
-	// In the architecture specified, the Token endpoint is protected. 
-	// This implies the client must maintain standard auth context (like getting UserID).
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
 
-	resp, err := h.service.MintToken(c.Request.Context(), req, userID)
+	resp, err := h.service.SwitchContext(c.Request.Context(), req, userID)
 	if err != nil {
 		response.Error(c, err)
 		return

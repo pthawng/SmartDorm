@@ -23,6 +23,7 @@ type ErrorResponse struct {
 type ErrorPayload struct {
 	Code    string            `json:"code"`
 	Message string            `json:"message"`
+	Reason  string            `json:"reason,omitempty"`
 	Details map[string]string `json:"details,omitempty"`
 }
 
@@ -71,6 +72,7 @@ func Error(c *gin.Context, err error) {
 			Error: ErrorPayload{
 				Code:    string(appErr.Code),
 				Message: appErr.Message,
+				Reason:  appErr.Reason,
 				Details: appErr.Details,
 			},
 		})

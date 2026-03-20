@@ -15,10 +15,8 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler, jwtIssuer *jwt.Is
 		authGroup.POST("/register", handler.Register)
 		authGroup.POST("/login", handler.Login)
 
-		// Protected endpoints (require transient/identity token logic)
-		// Assuming for MVP: the client can use an existing short-lived token to switch contexts,
-		// OR login returns a base token that is used here to get a context token.
-		authGroup.POST("/token", middleware.RequireAuth(jwtIssuer), handler.Token)
+		// Switch security context (explicitly choosing a role/workspace)
+		authGroup.POST("/switch-context", middleware.RequireAuth(jwtIssuer), handler.SwitchContext)
 		authGroup.POST("/refresh", handler.Refresh) // Added for Phase 0 (Compatibility)
 		authGroup.POST("/logout", handler.Logout)
 		authGroup.GET("/me", middleware.RequireAuth(jwtIssuer), handler.GetMe)

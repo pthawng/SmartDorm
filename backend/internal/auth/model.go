@@ -13,10 +13,11 @@ type User struct {
 	PasswordHash string     `db:"password_hash"`
 	FullName     string     `db:"full_name"`
 	Phone        *string    `db:"phone"`
-	IsActive     bool       `db:"is_active"`
-	CreatedAt    time.Time  `db:"created_at"`
-	UpdatedAt    time.Time  `db:"updated_at"`
-	DeletedAt    *time.Time `db:"deleted_at"`
+	SecurityStamp uuid.UUID  `db:"security_stamp"`
+	IsActive      bool       `db:"is_active"`
+	CreatedAt     time.Time  `db:"created_at"`
+	UpdatedAt     time.Time  `db:"updated_at"`
+	DeletedAt     *time.Time `db:"deleted_at"`
 }
 
 // Membership represents a user's role within a workspace
@@ -58,12 +59,15 @@ type AdminContext struct {
 	Role string `db:"role"`
 }
 
-// RefreshToken represents a stored session-level token
+// RefreshToken represents a stored session-level token snapshot
 type RefreshToken struct {
-	ID        uuid.UUID `db:"id"`
-	UserID    uuid.UUID `db:"user_id"`
-	TokenHash string    `db:"token_hash"`
-	ExpiresAt time.Time `db:"expires_at"`
-	DeviceID  *string   `db:"device_id"`
-	CreatedAt time.Time `db:"created_at"`
+	ID          uuid.UUID  `db:"id"`
+	UserID      uuid.UUID  `db:"user_id"`
+	WorkspaceID *uuid.UUID `db:"workspace_id"`
+	ActiveRole  string     `db:"active_role"`
+	TokenHash   string     `db:"token_hash"`
+	ExpiresAt   time.Time  `db:"expires_at"`
+	DeviceID    *string    `db:"device_id"`
+	SecurityStamp uuid.UUID  `db:"security_stamp"`
+	CreatedAt     time.Time  `db:"created_at"`
 }

@@ -18,10 +18,11 @@ type Repository interface {
 	GetRenter(ctx context.Context, userID, renterID uuid.UUID) (bool, error)
 
 	// Refresh Token methods
-	StoreRefreshToken(ctx context.Context, id, userID uuid.UUID, tokenHash string, exp time.Time, deviceID *string) error
+	StoreRefreshToken(ctx context.Context, id, userID uuid.UUID, tokenHash string, exp time.Time, activeRole string, workspaceID *uuid.UUID, deviceID *string, securityStamp uuid.UUID) error
 	GetRefreshToken(ctx context.Context, tokenHash string) (*RefreshToken, error)
 	DeleteRefreshToken(ctx context.Context, id uuid.UUID) error
 	DeleteUserRefreshTokens(ctx context.Context, userID uuid.UUID) error
+	UpdateSecurityStamp(ctx context.Context, userID uuid.UUID) (uuid.UUID, error) 
 }
 
 type repository struct {
@@ -36,7 +37,7 @@ func (r *repository) CreateUser(ctx context.Context, email, passwordHash, fullNa
 	const q = `
 		INSERT INTO users (email, password_hash, full_name, phone) 
 		VALUES ($1, $2, $3, $4) 
-		RETURNING id, email, password_hash, full_name, phone, is_active, created_at, updated_at, deleted_at`
+		RETURNING id, email, password_hash, full_name, phone, security_stamp, is_active, created_at, updated_at, deleted_at`
 
 	var user User
 	var p *string
@@ -53,7 +54,7 @@ func (r *repository) CreateUser(ctx context.Context, email, passwordHash, fullNa
 
 func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	const q = `
-		SELECT id, email, password_hash, full_name, phone, is_active, created_at, updated_at, deleted_at 
+		SELECT id, email, password_hash, full_name, phone, security_stamp, is_active, created_at, updated_at, deleted_at 
 		FROM users 
 		WHERE email = $1 AND deleted_at IS NULL`
 
@@ -67,7 +68,7 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 
 func (r *repository) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	const q = `
-		SELECT id, email, password_hash, full_name, phone, is_active, created_at, updated_at, deleted_at 
+		SELECT id, email, password_hash, full_name, phone, security_stamp, is_active, created_at, updated_at, deleted_at 
 		FROM users 
 		WHERE id = $1 AND deleted_at IS NULL`
 
@@ -149,17 +150,24 @@ func (r *repository) GetRenter(ctx context.Context, userID, renterID uuid.UUID) 
 	return exists, err
 }
 
-func (r *repository) StoreRefreshToken(ctx context.Context, id, userID uuid.UUID, tokenHash string, exp time.Time, deviceID *string) error {
+func (r *repository) UpdateSecurityStamp(ctx context.Context, userID uuid.UUID) (uuid.UUID, error) {
+	newStamp := uuid.New()
+	const q = `UPDATE users SET security_stamp = $1, updated_at = NOW() WHERE id = $2`
+	_, err := r.db.ExecContext(ctx, q, newStamp, userID)
+	return newStamp, err
+}
+
+func (r *repository) StoreRefreshToken(ctx context.Context, id, userID uuid.UUID, tokenHash string, exp time.Time, activeRole string, workspaceID *uuid.UUID, deviceID *string, securityStamp uuid.UUID) error {
 	const q = `
-		INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at, device_id) 
-		VALUES ($1, $2, $3, $4, $5)`
-	_, err := r.db.ExecContext(ctx, q, id, userID, tokenHash, exp, deviceID)
+		INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at, active_role, workspace_id, device_id, security_stamp) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	_, err := r.db.ExecContext(ctx, q, id, userID, tokenHash, exp, activeRole, workspaceID, deviceID, securityStamp)
 	return err
 }
 
 func (r *repository) GetRefreshToken(ctx context.Context, tokenHash string) (*RefreshToken, error) {
 	const q = `
-		SELECT id, user_id, token_hash, expires_at, device_id, created_at 
+		SELECT id, user_id, token_hash, expires_at, active_role, workspace_id, security_stamp, device_id, created_at 
 		FROM refresh_tokens 
 		WHERE token_hash = $1`
 	var rt RefreshToken

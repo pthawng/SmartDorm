@@ -11,20 +11,20 @@ import type { LoginFormData, RegisterFormData } from '../types';
 export function useLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { hydrateAuth } = useAuthStore();
   const navigate = useNavigate();
 
   const login = async (data: LoginFormData) => {
     setIsLoading(true);
     setError(null);
     try {
+      // 1. POST /auth/login (Sets RT cookie)
       await authApi.login(data);
-      // NOTE: Login in SmartDorm returns contexts first, not tokens.
-      // The tokens are issued after context selection via /auth/token.
-      // For simplicity in this mock-to-real transition, we store the user
-      // and redirect to the dashboard home which should handle missing tokens via interceptor or silent refresh.
       
-      // If we want to support the existing flow exactly:
-      // setAuth(response.data.data.user, ''); // No token yet
+      // 2. Hydrate session (POST /auth/refresh -> gets User + AT)
+      await hydrateAuth();
+
+      // 3. Navigate to dashboard
       navigate(ROUTES.DASHBOARD.HOME);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');

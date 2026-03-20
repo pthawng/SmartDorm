@@ -18,15 +18,14 @@ const (
 
 // Claims represents the standardized JWT payload
 type Claims struct {
-	UserID        *uuid.UUID `json:"user_id,omitempty"`
-	Role          string     `json:"role"`
-	
-	// Role specific claims
-	WorkspaceID   *uuid.UUID `json:"workspace_id,omitempty"` // For LANDLORD
-	RenterID      *uuid.UUID `json:"renter_id,omitempty"`    // For TENANT
-	MembershipRole *string    `json:"membership_role,omitempty"` // 'owner', 'property_manager'
+	UserID     *uuid.UUID `json:"user_id,omitempty"`
+	ActiveRole string     `json:"active_role"` // LANDLORD, TENANT, ADMIN
 
-	AdminRole     *string    `json:"admin_role,omitempty"` // 'super_admin', etc
+	// Context specific claims
+	WorkspaceID    *uuid.UUID `json:"workspace_id,omitempty"` // For LANDLORD
+	MembershipRole *string    `json:"membership_role,omitempty"` // 'owner', 'manager', 'staff'
+	SecurityStamp  *uuid.UUID `json:"security_stamp,omitempty"` // Version of the user identity
+	AdminRole      *string    `json:"admin_role,omitempty"`      // 'super_admin', etc
 
 	jwt.RegisteredClaims
 }
@@ -46,14 +45,15 @@ func NewIssuer(secret string) *Issuer {
 }
 
 // GenerateLandlordToken creates a token for a workspace owner/manager
-func (i *Issuer) GenerateLandlordToken(userID, workspaceID uuid.UUID, membershipRole string) (string, error) {
+func (i *Issuer) GenerateLandlordToken(userID, workspaceID uuid.UUID, membershipRole string, securityStamp uuid.UUID) (string, error) {
 	claims := Claims{
 		UserID:         &userID,
-		Role:           RoleLandlord,
+		ActiveRole:     RoleLandlord,
 		WorkspaceID:    &workspaceID,
 		MembershipRole: &membershipRole,
+		SecurityStamp:  &securityStamp,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)), // 1 hour for MVP
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
@@ -63,8 +63,8 @@ func (i *Issuer) GenerateLandlordToken(userID, workspaceID uuid.UUID, membership
 // GenerateRefreshToken creates a long-lived token for session maintenance
 func (i *Issuer) GenerateRefreshToken(userID uuid.UUID) (string, error) {
 	claims := Claims{
-		UserID: &userID,
-		Role:   "REFRESH",
+		UserID:     &userID,
+		ActiveRole: "REFRESH",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // 7 days
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -73,14 +73,14 @@ func (i *Issuer) GenerateRefreshToken(userID uuid.UUID) (string, error) {
 	return i.signToken(claims)
 }
 
-// GenerateTenantToken creates a token for a renter profile
-func (i *Issuer) GenerateTenantToken(userID, renterID uuid.UUID) (string, error) {
+// GenerateTenantToken creates a token for a user in tenant context
+func (i *Issuer) GenerateTenantToken(userID, securityStamp uuid.UUID) (string, error) {
 	claims := Claims{
-		UserID:   &userID,
-		Role:     RoleTenant,
-		RenterID: &renterID,
+		UserID:        &userID,
+		ActiveRole:    RoleTenant,
+		SecurityStamp: &securityStamp,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)), // 1 hour for MVP
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}

@@ -49,10 +49,11 @@ type ContextPayload struct {
 }
 
 type TokenResponse struct {
-	AccessToken  string               `json:"access_token"`
-	RefreshToken string               `json:"-"` // Internal use for setting cookie
-	ExpiresAt    string               `json:"expires_at"` // ISO8601
-	Context      TokenResponseContext `json:"context"`
+	User         UserResponse          `json:"user"`
+	AccessToken  string                `json:"accessToken"`
+	RefreshToken string                `json:"-"` // Internal use for setting cookie
+	ExpiresAt    string                `json:"expiresAt"`
+	Context      *TokenResponseContext `json:"context,omitempty"`
 }
 
 type TokenResponseContext struct {

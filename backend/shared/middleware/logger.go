@@ -32,7 +32,7 @@ func Logger() gin.HandlerFunc {
 		// Extract identity context if present (set by Auth middleware)
 		userID, _ := c.Get(ContextUserID)
 		workspaceID, _ := c.Get(ContextWorkspaceID)
-		role, _ := c.Get(ContextRole)
+		role, _ := c.Get(ContextActiveRole)
 
 		level := slog.LevelInfo
 		if status >= 500 {

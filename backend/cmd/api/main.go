@@ -25,6 +25,7 @@ import (
 	"smartdorm/internal/room"
 	"smartdorm/internal/scheduler"
 	"smartdorm/internal/workspace"
+	"smartdorm/shared/middleware"
 
 	"github.com/gin-gonic/gin"
 	"log/slog"
@@ -80,7 +81,10 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	router := gin.New()
-	router.Use(gin.Logger(), gin.Recovery())
+	router.Use(gin.Logger(), gin.Recovery(), middleware.CORS())
+	
+	// Elite Logic: Global Context Consistency Check
+	router.Use(middleware.ValidateContext())
 
 	// Implement core middlewares explicitly here before routing:
 	// - CORS

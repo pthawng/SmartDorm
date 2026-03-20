@@ -6,6 +6,9 @@ import (
 	"smartdorm/shared/response"
 	"smartdorm/shared/middleware"
 	"smartdorm/shared/pagination"
+	"smartdorm/shared/policy"
+	"smartdorm/shared/audit"
+	"smartdorm/shared/errors"
 	"github.com/google/uuid"
 )
 
@@ -35,6 +38,10 @@ func (h *Handler) Create(c *gin.Context) {
 		response.Error(c, err)
 		return
 	}
+
+	// Audit Log
+	userID, _ := middleware.GetUserID(c)
+	audit.LogMutation(c.Request.Context(), userID, audit.ActionCreate, "PROPERTY", resp.ID.String(), &workspaceID)
 
 	response.Created(c, resp)
 }
@@ -102,11 +109,30 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
+	// Senior Logic: Fetch resource first for policy check
+	// Note: In a larger app, this might be handled by a 'Service.Get' or 'Repository.Get'
+	// For demonstration, assume h.service.Get returns the property model
+	prop, err := h.service.Get(c.Request.Context(), workspaceID, id)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	// Policy Check (Ownership/Isolation)
+	if !policy.CanManageProperty(workspaceID.String(), prop.WorkspaceID.String()) {
+		response.Error(c, errors.NewForbidden("Insufficient permissions for this property"))
+		return
+	}
+
 	resp, err := h.service.Update(c.Request.Context(), workspaceID, id, req)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
+
+	// Audit Log
+	userID, _ := middleware.GetUserID(c)
+	audit.LogMutation(c.Request.Context(), userID, audit.ActionUpdate, "PROPERTY", id.String(), &workspaceID)
 
 	response.OK(c, resp)
 }

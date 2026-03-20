@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"smartdorm/shared/jwt"
+	"smartdorm/shared/audit"
 	apperr "smartdorm/shared/errors"
 )
 
@@ -17,7 +18,7 @@ import (
 type Service interface {
 	Register(ctx context.Context, req RegisterRequest) (*UserResponse, error)
 	Login(ctx context.Context, req LoginRequest) (*LoginResponse, error)
-	MintToken(ctx context.Context, req TokenRequest, userID uuid.UUID) (*TokenResponse, error)
+	SwitchContext(ctx context.Context, req TokenRequest, userID uuid.UUID) (*TokenResponse, error)
 	GetUser(ctx context.Context, userID uuid.UUID) (*UserResponse, error)
 	Refresh(ctx context.Context, refreshToken string) (*TokenResponse, error)
 	Logout(ctx context.Context, refreshToken string) error
@@ -63,7 +64,8 @@ func (s *service) Register(ctx context.Context, req RegisterRequest) (*UserRespo
 	if err == nil {
 		rtID := uuid.New()
 		exp := time.Now().Add(7 * 24 * time.Hour)
-		err = s.repo.StoreRefreshToken(ctx, rtID, user.ID, rt, exp, nil)
+		// Default to TENANT context on register
+		err = s.repo.StoreRefreshToken(ctx, rtID, user.ID, rt, exp, jwt.RoleTenant, nil, nil, user.SecurityStamp)
 		if err == nil {
 			refreshToken = rt
 		}
@@ -104,8 +106,12 @@ func (s *service) Login(ctx context.Context, req LoginRequest) (*LoginResponse, 
 	}
 
 	// Map generic contexts payload
-	// Default to empty slice instead of nil for JSON consistency
 	contexts := make([]ContextPayload, 0)
+
+	// Senior Logic: Always include fallback TENANT context
+	contexts = append(contexts, ContextPayload{
+		Type: "renter", // RoleTenant context
+	})
 
 	for _, w := range dbContexts.Workspaces {
 		wsID := w.WorkspaceID
@@ -154,7 +160,8 @@ func (s *service) Login(ctx context.Context, req LoginRequest) (*LoginResponse, 
 		rtID := uuid.New()
 		// 7 days expiration for RT
 		exp := time.Now().Add(7 * 24 * time.Hour)
-		err = s.repo.StoreRefreshToken(ctx, rtID, user.ID, rt, exp, nil)
+		// Default to TENANT context on login
+		err = s.repo.StoreRefreshToken(ctx, rtID, user.ID, rt, exp, jwt.RoleTenant, nil, nil, user.SecurityStamp)
 		if err == nil {
 			resp.RefreshToken = rt
 		}
@@ -163,73 +170,86 @@ func (s *service) Login(ctx context.Context, req LoginRequest) (*LoginResponse, 
 	return resp, nil
 }
 
-func (s *service) MintToken(ctx context.Context, req TokenRequest, userID uuid.UUID) (*TokenResponse, error) {
-	var token string
-	contextResp := TokenResponseContext{
-		Type: req.ContextType,
+func (s *service) SwitchContext(ctx context.Context, req TokenRequest, userID uuid.UUID) (*TokenResponse, error) {
+	// Senior Logic: Explicit Rule - workspace_id == null -> TENANT
+	if req.ContextType == "renter" || (req.ContextType == "workspace" && req.WorkspaceID == nil) {
+		u, err := s.repo.GetUserByID(ctx, userID)
+		if err != nil {
+			return nil, apperr.NewInternal(err, "failed to verify user identity")
+		}
+		token, err := s.jwtIssuer.GenerateTenantToken(userID, u.SecurityStamp)
+		
+		// Audit Log: Switch Role
+		audit.LogMutation(ctx, userID, audit.ActionSwitch, "AUTH", "TENANT", nil)
+
+		return s.buildTokenResponse(ctx, userID, token, "TENANT", nil, nil, u.SecurityStamp)
 	}
 
 	switch req.ContextType {
 	case "workspace":
-		if req.WorkspaceID == nil {
-			return nil, apperr.NewValidation(map[string]string{"workspace_id": "Required when type is workspace"})
-		}
-		// Verify membership
+		// MUST CHECK: Strict Membership Validation (Issue 2.1)
 		m, err := s.repo.GetMembership(ctx, userID, *req.WorkspaceID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return nil, apperr.NewForbidden("Not a member of this workspace")
+				return nil, apperr.NewForbidden("Access denied", "Not a member of this workspace")
 			}
 			return nil, apperr.NewInternal(err, "failed to verify workspace membership")
 		}
-		token, err = s.jwtIssuer.GenerateLandlordToken(userID, *req.WorkspaceID, m.Role)
-		if err != nil {
-			return nil, apperr.NewInternal(err, "failed to mint token")
-		}
-		contextResp.WorkspaceID = req.WorkspaceID
-		contextResp.MembershipRole = &m.Role
 
-	case "renter":
-		if req.RenterID == nil {
-			return nil, apperr.NewValidation(map[string]string{"renter_id": "Required when type is renter"})
-		}
-		// Verify renter
-		valid, err := s.repo.GetRenter(ctx, userID, *req.RenterID)
+		u, err := s.repo.GetUserByID(ctx, userID)
 		if err != nil {
-			return nil, apperr.NewInternal(err, "failed to verify renter profile")
+			return nil, apperr.NewInternal(err, "failed to verify user identity")
 		}
-		if !valid {
-			return nil, apperr.NewForbidden("Invalid renter profile")
-		}
-		token, err = s.jwtIssuer.GenerateTenantToken(userID, *req.RenterID)
+
+		token, err := s.jwtIssuer.GenerateLandlordToken(userID, *req.WorkspaceID, m.Role, u.SecurityStamp)
 		if err != nil {
-			return nil, apperr.NewInternal(err, "failed to mint token")
+			return nil, apperr.NewInternal(err, "failed to mint landlord token")
 		}
-		contextResp.RenterID = req.RenterID
+
+		// Audit Log: Switch Role
+		audit.LogMutation(ctx, userID, audit.ActionSwitch, "AUTH", "LANDLORD", req.WorkspaceID)
+
+		return s.buildTokenResponse(ctx, userID, token, "LANDLORD", req.WorkspaceID, &m.Role, u.SecurityStamp)
 
 	case "admin":
-		// MVP: Admin generation logic placeholder
-		return nil, apperr.NewForbidden("Admin portal access restricted")
+		return nil, apperr.NewForbidden("Restricted access", "Admin portal restricted")
 
 	default:
-		return nil, apperr.NewValidation(map[string]string{"context_type": "Invalid type"})
+		return nil, apperr.NewValidation(map[string]string{"context_type": "Invalid context type"})
+	}
+}
+
+// Helper to avoid DRY in MintToken and potentially Refresh
+func (s *service) buildTokenResponse(ctx context.Context, userID uuid.UUID, token string, role string, wsID *uuid.UUID, membershipRole *string, securityStamp uuid.UUID) (*TokenResponse, error) {
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, apperr.NewInternal(err, "failed to fetch user for response")
 	}
 
-	// Assume 1 hour expiry based on ISSUER configuration
 	expiresAt := time.Now().Add(1 * time.Hour).Format(time.RFC3339)
-
+	
 	resp := &TokenResponse{
+		User: UserResponse{
+			ID:       user.ID,
+			Email:    user.Email,
+			FullName: user.FullName,
+			Phone:    user.Phone,
+		},
 		AccessToken: token,
 		ExpiresAt:   expiresAt,
-		Context:     contextResp,
+		Context: &TokenResponseContext{
+			Type:           role,
+			WorkspaceID:    wsID,
+			MembershipRole: membershipRole,
+		},
 	}
 
-	// Phase 1: Issue/Renew Refresh Token on Token minting
+	// Rotation: Renew Refresh Token with the NEW active context snapshot
 	rt, err := s.jwtIssuer.GenerateRefreshToken(userID)
 	if err == nil {
 		rtID := uuid.New()
 		exp := time.Now().Add(7 * 24 * time.Hour)
-		err = s.repo.StoreRefreshToken(ctx, rtID, userID, rt, exp, nil)
+		err = s.repo.StoreRefreshToken(ctx, rtID, userID, rt, exp, role, wsID, nil, securityStamp)
 		if err == nil {
 			resp.RefreshToken = rt
 		}
@@ -270,13 +290,48 @@ func (s *service) Refresh(ctx context.Context, refreshToken string) (*TokenRespo
 		return nil, apperr.NewUnauthorized("Refresh token expired")
 	}
 
-	// 3. Generate NEW Access Token (Base user token initially)
-	// For MVP: assume refresh returns a base identity token. 
-	// If the user was in a context, the FE can use this token to re-mint a context token if needed,
-	// or we could store context_id in RT. For now, keep it simple.
-	
-	// Mint a base token (no specific context for now, or use last known)
-	newAT, err := s.jwtIssuer.GenerateRefreshToken(rt.UserID) 
+	// NEW: Security Stamp Validation (Issue: Global Revocation)
+	user, err := s.repo.GetUserByID(ctx, rt.UserID)
+	if err != nil {
+		return nil, apperr.NewInternal(err, "failed to verify user during refresh")
+	}
+	if user.SecurityStamp != rt.SecurityStamp {
+		s.repo.DeleteUserRefreshTokens(ctx, rt.UserID) // Nuke all sessions for safety
+		return nil, apperr.NewUnauthorized("Security context changed. Please login again.")
+	}
+
+	// Senior Logic: Re-validate membership if in LANDLORD context (Issue 2.3)
+	if rt.ActiveRole == jwt.RoleLandlord && rt.WorkspaceID != nil {
+		_, err := s.repo.GetMembership(ctx, rt.UserID, *rt.WorkspaceID)
+		if err != nil {
+			// If membership is gone, demote to TENANT instead of failing?
+			// For strict production safety: Fail and force re-login/re-switch.
+			return nil, apperr.NewForbidden("Stale context", "Workspace membership no longer valid")
+		}
+	}
+
+	// 3. Generate NEW Access Token (Restoring context from Snapshot)
+	var newAT string
+	switch rt.ActiveRole {
+	case jwt.RoleLandlord:
+		if rt.WorkspaceID != nil {
+			// In context snapshot, we should ideally store and restore membership role too.
+			// For now, re-fetch it to ensure it's still current (Issue 2.3)
+			m, err := s.repo.GetMembership(ctx, rt.UserID, *rt.WorkspaceID)
+			if err != nil {
+				return nil, apperr.NewForbidden("Stale context", "Workspace membership no longer valid")
+			}
+			newAT, err = s.jwtIssuer.GenerateLandlordToken(rt.UserID, *rt.WorkspaceID, m.Role, user.SecurityStamp)
+		} else {
+			// Fallback to tenant if landlord context is broken
+			newAT, err = s.jwtIssuer.GenerateTenantToken(rt.UserID, user.SecurityStamp)
+		}
+	case jwt.RoleTenant:
+		newAT, err = s.jwtIssuer.GenerateTenantToken(rt.UserID, user.SecurityStamp)
+	default:
+		newAT, err = s.jwtIssuer.GenerateTenantToken(rt.UserID, user.SecurityStamp)
+	}
+
 	if err != nil {
 		return nil, apperr.NewInternal(err, "failed to generate access token")
 	}
@@ -287,20 +342,34 @@ func (s *service) Refresh(ctx context.Context, refreshToken string) (*TokenRespo
 		return nil, apperr.NewInternal(err, "failed to generate refresh token")
 	}
 
-	// 5. Update DB: Delete OLD, Store NEW
+	// 5. Update DB: Delete OLD, Store NEW (Carry over context)
 	s.repo.DeleteRefreshToken(ctx, rt.ID)
 	
 	newRTID := uuid.New()
 	newExp := time.Now().Add(7 * 24 * time.Hour)
-	err = s.repo.StoreRefreshToken(ctx, newRTID, rt.UserID, newRT, newExp, rt.DeviceID)
+	err = s.repo.StoreRefreshToken(ctx, newRTID, rt.UserID, newRT, newExp, rt.ActiveRole, rt.WorkspaceID, rt.DeviceID, user.SecurityStamp)
 	if err != nil {
 		return nil, apperr.NewInternal(err, "failed to store new refresh token")
 	}
 
+	// User info is already fetched above
+
+	expiresAt := time.Now().Add(1 * time.Hour).Format(time.RFC3339)
+
 	return &TokenResponse{
+		User: UserResponse{
+			ID:       user.ID,
+			Email:    user.Email,
+			FullName: user.FullName,
+			Phone:    user.Phone,
+		},
 		AccessToken:  newAT,
 		RefreshToken: newRT,
-		ExpiresAt:    time.Now().Add(1 * time.Hour).Format(time.RFC3339),
+		ExpiresAt:    expiresAt,
+		Context: &TokenResponseContext{
+			Type:        rt.ActiveRole,
+			WorkspaceID: rt.WorkspaceID,
+		},
 	}, nil
 }
 

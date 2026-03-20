@@ -10,6 +10,7 @@ import { setupInterceptors } from './interceptors';
 export const apiClient = axios.create({
   baseURL: ENV.API_BASE_URL,
   timeout: 15_000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },

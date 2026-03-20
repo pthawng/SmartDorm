@@ -19,6 +19,7 @@ const (
 type AppError struct {
 	Code    ErrorCode
 	Message string
+	Reason  string            `json:"reason,omitempty"`
 	Details map[string]string // Field-level details for validation errors
 	Err     error             // Underlying error (for internal logging, not exposed)
 }
@@ -74,8 +75,12 @@ func NewUnauthorized(msg string) *AppError {
 	return New(CodeUnauthorized, msg)
 }
 
-func NewForbidden(msg string) *AppError {
-	return New(CodeForbidden, msg)
+func NewForbidden(msg string, reason ...string) *AppError {
+	e := New(CodeForbidden, msg)
+	if len(reason) > 0 {
+		e.Reason = reason[0]
+	}
+	return e
 }
 
 func NewValidation(details map[string]string) *AppError {

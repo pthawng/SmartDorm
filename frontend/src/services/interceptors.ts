@@ -16,11 +16,6 @@ export function setupInterceptors(client: AxiosInstance): void {
         config.headers.Authorization = `Bearer ${token}`;
       }
 
-      // Attach workspace context
-      const workspaceId = localStorage.getItem('workspace_id');
-      if (workspaceId) {
-        config.headers['X-Workspace-ID'] = workspaceId;
-      }
 
       return config;
     },
