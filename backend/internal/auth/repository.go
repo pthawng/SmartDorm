@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"time"
 
 	"smartdorm/infrastructure/db"
 
@@ -15,6 +16,12 @@ type Repository interface {
 	GetUserContexts(ctx context.Context, userID uuid.UUID) (*UserContexts, error)
 	GetMembership(ctx context.Context, userID, workspaceID uuid.UUID) (*Membership, error)
 	GetRenter(ctx context.Context, userID, renterID uuid.UUID) (bool, error)
+
+	// Refresh Token methods
+	StoreRefreshToken(ctx context.Context, id, userID uuid.UUID, tokenHash string, exp time.Time, deviceID *string) error
+	GetRefreshToken(ctx context.Context, tokenHash string) (*RefreshToken, error)
+	DeleteRefreshToken(ctx context.Context, id uuid.UUID) error
+	DeleteUserRefreshTokens(ctx context.Context, userID uuid.UUID) error
 }
 
 type repository struct {
@@ -140,4 +147,37 @@ func (r *repository) GetRenter(ctx context.Context, userID, renterID uuid.UUID) 
 	var exists bool
 	err := r.db.GetContext(ctx, &exists, q, renterID, userID)
 	return exists, err
+}
+
+func (r *repository) StoreRefreshToken(ctx context.Context, id, userID uuid.UUID, tokenHash string, exp time.Time, deviceID *string) error {
+	const q = `
+		INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at, device_id) 
+		VALUES ($1, $2, $3, $4, $5)`
+	_, err := r.db.ExecContext(ctx, q, id, userID, tokenHash, exp, deviceID)
+	return err
+}
+
+func (r *repository) GetRefreshToken(ctx context.Context, tokenHash string) (*RefreshToken, error) {
+	const q = `
+		SELECT id, user_id, token_hash, expires_at, device_id, created_at 
+		FROM refresh_tokens 
+		WHERE token_hash = $1`
+	var rt RefreshToken
+	err := r.db.GetContext(ctx, &rt, q, tokenHash)
+	if err != nil {
+		return nil, err
+	}
+	return &rt, nil
+}
+
+func (r *repository) DeleteRefreshToken(ctx context.Context, id uuid.UUID) error {
+	const q = `DELETE FROM refresh_tokens WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, q, id)
+	return err
+}
+
+func (r *repository) DeleteUserRefreshTokens(ctx context.Context, userID uuid.UUID) error {
+	const q = `DELETE FROM refresh_tokens WHERE user_id = $1`
+	_, err := r.db.ExecContext(ctx, q, userID)
+	return err
 }

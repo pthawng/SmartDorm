@@ -19,6 +19,8 @@ type Service interface {
 	Login(ctx context.Context, req LoginRequest) (*LoginResponse, error)
 	MintToken(ctx context.Context, req TokenRequest, userID uuid.UUID) (*TokenResponse, error)
 	GetUser(ctx context.Context, userID uuid.UUID) (*UserResponse, error)
+	Refresh(ctx context.Context, refreshToken string) (*TokenResponse, error)
+	Logout(ctx context.Context, refreshToken string) error
 }
 
 type service struct {
@@ -55,11 +57,24 @@ func (s *service) Register(ctx context.Context, req RegisterRequest) (*UserRespo
 		return nil, apperr.NewInternal(err, "failed to create user")
 	}
 
+	// Phase 1: Issue Refresh Token on Register
+	rt, err := s.jwtIssuer.GenerateRefreshToken(user.ID)
+	var refreshToken string
+	if err == nil {
+		rtID := uuid.New()
+		exp := time.Now().Add(7 * 24 * time.Hour)
+		err = s.repo.StoreRefreshToken(ctx, rtID, user.ID, rt, exp, nil)
+		if err == nil {
+			refreshToken = rt
+		}
+	}
+
 	return &UserResponse{
-		ID:       user.ID,
-		Email:    user.Email,
-		FullName: user.FullName,
-		Phone:    user.Phone,
+		ID:           user.ID,
+		Email:        user.Email,
+		FullName:     user.FullName,
+		Phone:        user.Phone,
+		RefreshToken: refreshToken,
 	}, nil
 }
 
@@ -123,7 +138,7 @@ func (s *service) Login(ctx context.Context, req LoginRequest) (*LoginResponse, 
 	}
 
 	// Map response
-	return &LoginResponse{
+	resp := &LoginResponse{
 		User: UserResponse{
 			ID:       user.ID,
 			Email:    user.Email,
@@ -131,7 +146,21 @@ func (s *service) Login(ctx context.Context, req LoginRequest) (*LoginResponse, 
 			Phone:    user.Phone,
 		},
 		Contexts: contexts,
-	}, nil
+	}
+
+	// Phase 1: Issue Refresh Token on Login
+	rt, err := s.jwtIssuer.GenerateRefreshToken(user.ID)
+	if err == nil {
+		rtID := uuid.New()
+		// 7 days expiration for RT
+		exp := time.Now().Add(7 * 24 * time.Hour)
+		err = s.repo.StoreRefreshToken(ctx, rtID, user.ID, rt, exp, nil)
+		if err == nil {
+			resp.RefreshToken = rt
+		}
+	}
+
+	return resp, nil
 }
 
 func (s *service) MintToken(ctx context.Context, req TokenRequest, userID uuid.UUID) (*TokenResponse, error) {
@@ -189,11 +218,24 @@ func (s *service) MintToken(ctx context.Context, req TokenRequest, userID uuid.U
 	// Assume 1 hour expiry based on ISSUER configuration
 	expiresAt := time.Now().Add(1 * time.Hour).Format(time.RFC3339)
 
-	return &TokenResponse{
+	resp := &TokenResponse{
 		AccessToken: token,
 		ExpiresAt:   expiresAt,
 		Context:     contextResp,
-	}, nil
+	}
+
+	// Phase 1: Issue/Renew Refresh Token on Token minting
+	rt, err := s.jwtIssuer.GenerateRefreshToken(userID)
+	if err == nil {
+		rtID := uuid.New()
+		exp := time.Now().Add(7 * 24 * time.Hour)
+		err = s.repo.StoreRefreshToken(ctx, rtID, userID, rt, exp, nil)
+		if err == nil {
+			resp.RefreshToken = rt
+		}
+	}
+
+	return resp, nil
 }
 
 func (s *service) GetUser(ctx context.Context, userID uuid.UUID) (*UserResponse, error) {
@@ -210,4 +252,66 @@ func (s *service) GetUser(ctx context.Context, userID uuid.UUID) (*UserResponse,
 		FullName: user.FullName,
 		Phone:    user.Phone,
 	}, nil
+}
+
+func (s *service) Refresh(ctx context.Context, refreshToken string) (*TokenResponse, error) {
+	// 1. Verify token in DB
+	rt, err := s.repo.GetRefreshToken(ctx, refreshToken)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperr.NewUnauthorized("Invalid refresh token")
+		}
+		return nil, apperr.NewInternal(err, "failed to query refresh token")
+	}
+
+	// 2. Check expiration
+	if time.Now().After(rt.ExpiresAt) {
+		s.repo.DeleteRefreshToken(ctx, rt.ID)
+		return nil, apperr.NewUnauthorized("Refresh token expired")
+	}
+
+	// 3. Generate NEW Access Token (Base user token initially)
+	// For MVP: assume refresh returns a base identity token. 
+	// If the user was in a context, the FE can use this token to re-mint a context token if needed,
+	// or we could store context_id in RT. For now, keep it simple.
+	
+	// Mint a base token (no specific context for now, or use last known)
+	newAT, err := s.jwtIssuer.GenerateRefreshToken(rt.UserID) 
+	if err != nil {
+		return nil, apperr.NewInternal(err, "failed to generate access token")
+	}
+
+	// 4. Rotation: Generate NEW Refresh Token
+	newRT, err := s.jwtIssuer.GenerateRefreshToken(rt.UserID)
+	if err != nil {
+		return nil, apperr.NewInternal(err, "failed to generate refresh token")
+	}
+
+	// 5. Update DB: Delete OLD, Store NEW
+	s.repo.DeleteRefreshToken(ctx, rt.ID)
+	
+	newRTID := uuid.New()
+	newExp := time.Now().Add(7 * 24 * time.Hour)
+	err = s.repo.StoreRefreshToken(ctx, newRTID, rt.UserID, newRT, newExp, rt.DeviceID)
+	if err != nil {
+		return nil, apperr.NewInternal(err, "failed to store new refresh token")
+	}
+
+	return &TokenResponse{
+		AccessToken:  newAT,
+		RefreshToken: newRT,
+		ExpiresAt:    time.Now().Add(1 * time.Hour).Format(time.RFC3339),
+	}, nil
+}
+
+func (s *service) Logout(ctx context.Context, refreshToken string) error {
+	rt, err := s.repo.GetRefreshToken(ctx, refreshToken)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil // Already logged out or invalid
+		}
+		return apperr.NewInternal(err, "failed to query refresh token during logout")
+	}
+
+	return s.repo.DeleteRefreshToken(ctx, rt.ID)
 }

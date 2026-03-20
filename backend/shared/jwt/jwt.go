@@ -60,6 +60,19 @@ func (i *Issuer) GenerateLandlordToken(userID, workspaceID uuid.UUID, membership
 	return i.signToken(claims)
 }
 
+// GenerateRefreshToken creates a long-lived token for session maintenance
+func (i *Issuer) GenerateRefreshToken(userID uuid.UUID) (string, error) {
+	claims := Claims{
+		UserID: &userID,
+		Role:   "REFRESH",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // 7 days
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+	return i.signToken(claims)
+}
+
 // GenerateTenantToken creates a token for a renter profile
 func (i *Issuer) GenerateTenantToken(userID, renterID uuid.UUID) (string, error) {
 	claims := Claims{

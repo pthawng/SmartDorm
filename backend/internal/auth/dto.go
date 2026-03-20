@@ -26,15 +26,17 @@ type TokenRequest struct {
 // --- Responses ---
 
 type UserResponse struct {
-	ID       uuid.UUID `json:"id"`
-	Email    string    `json:"email"`
-	FullName string    `json:"full_name"`
-	Phone    *string   `json:"phone,omitempty"`
+	ID           uuid.UUID `json:"id"`
+	Email        string    `json:"email"`
+	FullName     string    `json:"full_name"`
+	Phone        *string   `json:"phone,omitempty"`
+	RefreshToken string    `json:"-"` // Internal use for setting cookie
 }
 
 type LoginResponse struct {
-	User     UserResponse     `json:"user"`
-	Contexts []ContextPayload `json:"contexts"`
+	User         UserResponse     `json:"user"`
+	Contexts     []ContextPayload `json:"contexts"`
+	RefreshToken string           `json:"-"` // Internal use for setting cookie
 }
 
 type ContextPayload struct {
@@ -47,9 +49,10 @@ type ContextPayload struct {
 }
 
 type TokenResponse struct {
-	AccessToken string                 `json:"access_token"`
-	ExpiresAt   string                 `json:"expires_at"` // ISO8601
-	Context     TokenResponseContext   `json:"context"`
+	AccessToken  string               `json:"access_token"`
+	RefreshToken string               `json:"-"` // Internal use for setting cookie
+	ExpiresAt    string               `json:"expires_at"` // ISO8601
+	Context      TokenResponseContext `json:"context"`
 }
 
 type TokenResponseContext struct {

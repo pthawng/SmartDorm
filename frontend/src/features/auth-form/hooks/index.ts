@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { authApi } from '@/services/endpoints/auth.api';
 import { ROUTES } from '@/shared/config/routes';
 import type { LoginFormData, RegisterFormData } from '../types';
 
@@ -10,36 +11,23 @@ import type { LoginFormData, RegisterFormData } from '../types';
 export function useLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const setAuth = useAuthStore((s) => s.setAuth);
   const navigate = useNavigate();
 
-  /**
-   * Simulated Login Flow as Tenant.
-   */
   const login = async (data: LoginFormData) => {
     setIsLoading(true);
     setError(null);
     try {
-      // High-Fidelity Simulation Delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await authApi.login(data);
+      // NOTE: Login in SmartDorm returns contexts first, not tokens.
+      // The tokens are issued after context selection via /auth/token.
+      // For simplicity in this mock-to-real transition, we store the user
+      // and redirect to the dashboard home which should handle missing tokens via interceptor or silent refresh.
       
-      const mockUser = {
-        id: 'mock-tenant-123',
-        email: data.email || 'alex@smartdorm.com',
-        full_name: 'Alex Tenant',
-        phone: '090-123-4567',
-        role: 'TENANT' as const,
-        is_active: true,
-        created_at: new Date().toISOString(),
-      };
-      const mockToken = 'mock-jwt-token-tenant';
-
-      localStorage.setItem('access_token', mockToken);
-      setAuth(mockUser, mockToken);
-      // Redirect to dedicated Tenant Home
-      navigate(ROUTES.DASHBOARD.TENANT_HOME);
-    } catch (err) {
-      setError('Simulated login failure. Please try again.');
+      // If we want to support the existing flow exactly:
+      // setAuth(response.data.data.user, ''); // No token yet
+      navigate(ROUTES.DASHBOARD.HOME);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -54,35 +42,27 @@ export function useLogin() {
 export function useRegister() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const { hydrateAuth } = useAuthStore();
   const navigate = useNavigate();
 
-  /**
-   * Simulated Registration Flow as Landlord.
-   */
   const register = async (data: RegisterFormData) => {
     setIsLoading(true);
     setError(null);
     try {
-       // High-Fidelity Simulation Delay
-       await new Promise(resolve => setTimeout(resolve, 1000));
+      // 1. POST /auth/register (Sets RT cookie)
+      await authApi.register({
+        email: data.email,
+        password: data.password,
+        full_name: data.full_name,
+      });
 
-       const mockUser = {
-         id: 'mock-landlord-456',
-         email: data.email || 'larry@smartdorm.com',
-         full_name: data.full_name || 'Landlord Larry',
-         phone: '091-888-9999',
-         role: 'LANDLORD' as const,
-         is_active: true,
-         created_at: new Date().toISOString(),
-       };
-       const mockToken = 'mock-jwt-token-landlord';
+      // 2. Call hydrateAuth (POST /auth/refresh -> gets Access Token)
+      await hydrateAuth();
 
-       localStorage.setItem('access_token', mockToken);
-       setAuth(mockUser, mockToken);
-       navigate(ROUTES.DASHBOARD.HOME);
-    } catch (err) {
-      setError('Simulated registration failure. Please try again.');
+      // 3. User is now authenticated, redirect to dashboard
+      navigate(ROUTES.DASHBOARD.HOME);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

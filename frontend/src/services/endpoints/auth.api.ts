@@ -22,11 +22,14 @@ export const authApi = {
     apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data),
 
   register: (data: LoginPayload & { full_name: string }) =>
-    apiClient.post<ApiResponse<AuthResponse>>('/auth/register', data),
+    apiClient.post<ApiResponse<UserData>>('/auth/register', data),
 
   me: () =>
     apiClient.get<ApiResponse<UserData>>('/users/me'),
 
   updateProfile: (data: Partial<UserData>) =>
     apiClient.patch<ApiResponse<UserData>>('/users/me', data),
+
+  refreshToken: () =>
+    apiClient.post<ApiResponse<AuthResponse>>('/auth/refresh', {}, { withCredentials: true }),
 };

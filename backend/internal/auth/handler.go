@@ -1,10 +1,13 @@
 package auth
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
 	"smartdorm/shared/response"
 	"smartdorm/shared/middleware"
+	"smartdorm/shared/errors"
 )
 
 type Handler struct {
@@ -28,6 +31,11 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
+	if resp.RefreshToken != "" {
+		c.SetSameSite(http.SameSiteLaxMode)
+		c.SetCookie("refreshToken", resp.RefreshToken, 3600*24*7, "/api/v1/auth/refresh", "", false, true)
+	}
+
 	response.Created(c, resp)
 }
 
@@ -42,6 +50,11 @@ func (h *Handler) Login(c *gin.Context) {
 	if err != nil {
 		response.Error(c, err)
 		return
+	}
+
+	if resp.RefreshToken != "" {
+		c.SetSameSite(http.SameSiteLaxMode)
+		c.SetCookie("refreshToken", resp.RefreshToken, 3600*24*7, "/api/v1/auth/refresh", "", false, true)
 	}
 
 	response.OK(c, resp)
@@ -69,6 +82,35 @@ func (h *Handler) Token(c *gin.Context) {
 		return
 	}
 
+	if resp.RefreshToken != "" {
+		c.SetSameSite(http.SameSiteLaxMode)
+		c.SetCookie("refreshToken", resp.RefreshToken, 3600*24*7, "/api/v1/auth/refresh", "", false, true)
+	}
+
+	response.OK(c, resp)
+}
+
+func (h *Handler) Refresh(c *gin.Context) {
+	// 1. Read RT from cookie
+	cookie, err := c.Cookie("refreshToken")
+	if err != nil {
+		response.Error(c, errors.NewUnauthorized("No refresh token provided"))
+		return
+	}
+
+	// 2. Call service to rotate
+	resp, err := h.service.Refresh(c.Request.Context(), cookie)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	// 3. Set NEW cookie
+	if resp.RefreshToken != "" {
+		c.SetSameSite(http.SameSiteLaxMode)
+		c.SetCookie("refreshToken", resp.RefreshToken, 3600*24*7, "/api/v1/auth/refresh", "", false, true)
+	}
+
 	response.OK(c, resp)
 }
 
@@ -86,4 +128,18 @@ func (h *Handler) GetMe(c *gin.Context) {
 	}
 
 	response.OK(c, resp)
+}
+
+func (h *Handler) Logout(c *gin.Context) {
+	cookie, err := c.Cookie("refreshToken")
+	if err == nil {
+		// Attempt to delete from DB if cookie exists
+		_ = h.service.Logout(c.Request.Context(), cookie)
+	}
+
+	// Always clear the cookie
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("refreshToken", "", -1, "/api/v1/auth/refresh", "", false, true)
+
+	response.OK(c, nil)
 }

@@ -57,3 +57,13 @@ type RenterContext struct {
 type AdminContext struct {
 	Role string `db:"role"`
 }
+
+// RefreshToken represents a stored session-level token
+type RefreshToken struct {
+	ID        uuid.UUID `db:"id"`
+	UserID    uuid.UUID `db:"user_id"`
+	TokenHash string    `db:"token_hash"`
+	ExpiresAt time.Time `db:"expires_at"`
+	DeviceID  *string   `db:"device_id"`
+	CreatedAt time.Time `db:"created_at"`
+}
