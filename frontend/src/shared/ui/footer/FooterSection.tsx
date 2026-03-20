@@ -15,11 +15,11 @@ interface FooterSectionProps {
  */
 export function FooterSection({ title, links }: FooterSectionProps) {
   return (
-    <div className="space-y-8">
-      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-900 mb-6 group-hover:text-primary-600 transition-colors">
+    <div className="space-y-4">
+      <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-900 group-hover:text-primary-600 transition-colors">
         {title}
       </h4>
-      <ul className="space-y-4">
+      <ul className="space-y-3">
         {links.map((link) => (
           <li key={link.path}>
             <Link 

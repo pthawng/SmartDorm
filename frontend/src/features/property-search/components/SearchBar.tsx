@@ -1,31 +1,49 @@
-import { Search } from 'lucide-react';
-import { Input } from '@/shared/ui/Input';
+import { Search, MapPin, Calendar } from 'lucide-react';
 
 interface SearchBarProps {
-  value: string;
-  onChange: (val: string) => void;
+  onSearch?: (location: string, date: string) => void;
   placeholder?: string;
 }
 
 /**
- * Stylized search input with premium Airbnb aesthetics.
+ * High-fidelity Spotlight Search bar. 
+ * Dual-field input system with integrated primary action.
  */
-export function SearchBar({ value, onChange, placeholder = "Search for dorms, areas, or keywords..." }: SearchBarProps) {
+export function SearchBar({ onSearch }: SearchBarProps) {
   return (
-    <div className="relative group max-w-2xl mx-auto">
-      <div className="absolute inset-0 bg-primary-500/10 blur-2xl rounded-full scale-90 opacity-0 group-focus-within:opacity-100 transition-all duration-700" />
-      <div className="relative flex items-center bg-white rounded-full p-2 pl-6 shadow-xl border border-slate-100 focus-within:ring-4 focus-within:ring-primary-500/10 transition-all">
-        <Search className="w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
-        <Input 
-          className="border-none bg-transparent shadow-none focus-visible:ring-0 text-lg font-medium placeholder:text-slate-400 w-full ml-4"
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
-        <button className="ml-2 bg-primary-600 text-white px-8 py-3 rounded-full font-bold hover:bg-primary-700 shadow-lg shadow-primary-500/25 active:scale-95 transition-all">
-          Search
-        </button>
+    <div className="flex flex-col sm:flex-row items-center bg-white p-2 rounded-3xl sm:rounded-full shadow-2xl border border-slate-100 w-full max-w-2xl animate-in slide-in-from-bottom-4 duration-1000 hover:shadow-primary-500/5 transition-all group/container">
+      {/* 1. Location Input */}
+      <div className="flex-1 flex items-center px-4 py-3 sm:py-2 sm:border-r border-slate-100 group transition-all">
+        <MapPin className="w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+        <div className="flex flex-col ml-3">
+          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider leading-tight">Location</span>
+          <input 
+            placeholder="Enter city or university" 
+            className="w-full text-sm font-semibold text-slate-900 border-none p-0 focus:ring-0 placeholder:text-slate-300 bg-transparent h-5"
+          />
+        </div>
       </div>
+      
+      {/* 2. Date Input (Simplified as text for high-fidelity concept) */}
+      <div className="flex-1 flex items-center px-4 py-3 sm:py-2 group transition-all">
+        <Calendar className="w-5 h-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" />
+        <div className="flex flex-col ml-3">
+          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider leading-tight">Move-in</span>
+          <input 
+            placeholder="Choose a date" 
+            className="w-full text-sm font-semibold text-slate-900 border-none p-0 focus:ring-0 placeholder:text-slate-300 bg-transparent h-5"
+          />
+        </div>
+      </div>
+
+      {/* 3. Global Search CTA */}
+      <button 
+        onClick={() => onSearch?.('', '')}
+        className="w-full sm:w-auto px-10 py-4 bg-primary-600 hover:shadow-lg shadow-primary-500/30 hover:bg-primary-700 text-white rounded-2xl sm:rounded-full font-bold transition-all flex items-center justify-center gap-2 group"
+      >
+        <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
+        Search
+      </button>
     </div>
   );
 }

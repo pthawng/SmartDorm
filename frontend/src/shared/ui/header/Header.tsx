@@ -1,6 +1,7 @@
 import { HeaderLogo } from './HeaderLogo';
 import { HeaderNav } from './HeaderNav';
 import { HeaderUserMenu } from './HeaderUserMenu';
+import type { UserRole } from '@/entities/user';
 
 interface HeaderProps {
   isDashboard?: boolean;
@@ -8,6 +9,7 @@ interface HeaderProps {
   pageTitle?: string;
   userName?: string;
   userAvatar?: string;
+  userRole?: UserRole;
 }
 
 /**
@@ -18,7 +20,8 @@ export function Header({
   isLoggedIn = false,
   pageTitle,
   userName = 'Alex Rivers',
-  userAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150'
+  userAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150',
+  userRole
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-slate-100 shadow-sm transition-all duration-500">
@@ -58,7 +61,12 @@ export function Header({
              </div>
           </button>
           
-          <HeaderUserMenu name={userName} avatarUrl={userAvatar} isLoggedIn={isLoggedIn} />
+          <HeaderUserMenu 
+            name={userName} 
+            avatarUrl={userAvatar} 
+            isLoggedIn={isLoggedIn} 
+            role={userRole} 
+          />
         </div>
       </div>
     </header>

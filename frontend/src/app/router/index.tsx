@@ -42,6 +42,7 @@ const SettingsWorkspacePage = lazy(() => import('@/pages/(dashboard)/settings/wo
 const SettingsTeamPage      = lazy(() => import('@/pages/(dashboard)/settings/team'));
 const RenterListPage    = lazy(() => import('@/pages/(dashboard)/renters/list'));
 const RenterDetailPage  = lazy(() => import('@/pages/(dashboard)/renters/detail'));
+const MessagesPage      = lazy(() => import('@/pages/(dashboard)/messages'));
 
 // ── Error Page ───────────────────────────────────────────────
 const NotFoundPage = lazy(() => import('@/pages/not-found'));
@@ -90,6 +91,7 @@ export const router = createBrowserRouter([
           { path: 'settings/team',        element: <SettingsTeamPage /> },
           { path: 'renters',              element: <RenterListPage /> },
           { path: 'renters/:id',          element: <RenterDetailPage /> },
+          { path: 'messages',             element: <MessagesPage /> },
         ],
       },
 

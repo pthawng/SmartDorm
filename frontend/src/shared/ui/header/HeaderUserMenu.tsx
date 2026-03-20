@@ -2,11 +2,13 @@ import * as React from 'react';
 import { Button, Card } from '@/shared/ui';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/shared/config/routes';
+import type { UserRole } from '@/entities/user';
 
 interface HeaderUserMenuProps {
   name: string;
   avatarUrl?: string;
   isLoggedIn?: boolean;
+  role?: UserRole;
 }
 
 /**
@@ -14,7 +16,7 @@ interface HeaderUserMenuProps {
  * - Guest: Login / Register CTA
  * - User: Avatar / Dropdown
  */
-export function HeaderUserMenu({ name, avatarUrl, isLoggedIn = false }: HeaderUserMenuProps) {
+export function HeaderUserMenu({ name, avatarUrl, isLoggedIn = false, role }: HeaderUserMenuProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
   if (!isLoggedIn) {
@@ -51,7 +53,9 @@ export function HeaderUserMenu({ name, avatarUrl, isLoggedIn = false }: HeaderUs
         </div>
         <div className="hidden sm:flex flex-col items-start gap-0.5">
            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 leading-none">{name}</span>
-           <span className="text-[8px] font-bold uppercase tracking-widest text-slate-400 leading-none">Standard Resident</span>
+           <span className="text-[8px] font-bold uppercase tracking-widest text-slate-400 leading-none">
+             {role === 'LANDLORD' ? 'Property Owner' : 'Verified Resident'}
+           </span>
         </div>
         <svg className={`w-3 h-3 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
       </button>
@@ -66,12 +70,18 @@ export function HeaderUserMenu({ name, avatarUrl, isLoggedIn = false }: HeaderUs
                 <p className="text-xs font-black text-slate-900 leading-tight">Emerald Heights Residence</p>
              </div>
              
-             <div className="space-y-1">
-                <button className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all">Profile Interface</button>
-                <button className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all">Switch Workspace</button>
-                <div className="h-px bg-slate-50 my-1 mx-2" />
-                <button className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 rounded-xl transition-all">Terminate Session</button>
-             </div>
+              <div className="space-y-1">
+                 <Link to={ROUTES.DASHBOARD.MESSAGES} onClick={() => setIsOpen(false)}>
+                    <button className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all flex items-center justify-between">
+                       Resident Messages
+                       <div className="h-2 w-2 rounded-full bg-primary-500 animate-pulse" />
+                    </button>
+                 </Link>
+                 <button className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all">Profile Interface</button>
+                 <button className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all">Switch Workspace</button>
+                 <div className="h-px bg-slate-50 my-1 mx-2" />
+                 <button className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 rounded-xl transition-all">Terminate Session</button>
+              </div>
           </Card>
         </>
       )}

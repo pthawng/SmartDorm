@@ -3,10 +3,13 @@ import { Sidebar } from '@/shared/ui/sidebar';
 import { Header } from '@/shared/ui/header';
 import { Footer } from '@/shared/ui/footer';
 import { cn } from '@/shared/utils';
+import { useAuthStore } from '@/store/authStore';
 
 export function RootLayout() {
+  const { user, isAuthenticated } = useAuthStore();
   const location = useLocation();
   const isDashboard = location.pathname.includes('/dashboard');
+  const isAuthPath = location.pathname === '/login' || location.pathname === '/register';
   
   // Refined check: Tenant screens should NOT have a sidebar to maintain the 'Airbnb' airy feel.
   const isTenantPath = 
@@ -15,14 +18,22 @@ export function RootLayout() {
     location.pathname.startsWith('/dashboard/tenant') || 
     location.pathname.startsWith('/dashboard/contracts') ||
     location.pathname.startsWith('/dashboard/invoices') ||
-    location.pathname.startsWith('/dashboard/maintenance');
+    location.pathname.startsWith('/dashboard/maintenance') ||
+    location.pathname.startsWith('/dashboard/messages');
 
   const showSidebar = isDashboard && !isTenantPath;
 
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col">
-      {/* Global Header */}
-      <Header isDashboard={isDashboard} isLoggedIn={true} />
+      {/* Global Header (Hidden on immersive Auth screens) */}
+      {!isAuthPath && (
+        <Header 
+          isDashboard={isDashboard} 
+          isLoggedIn={isAuthenticated} 
+          userName={user?.full_name || user?.email || 'Alex Rivers'}
+          userRole={user?.role}
+        />
+      )}
 
       <div className="flex flex-1">
         {/* Sidebar - Desktop (Only for Landlord/Admin contexts) */}
@@ -43,8 +54,10 @@ export function RootLayout() {
             <Outlet />
           </div>
 
-          {/* Global Footer */}
-          <Footer isDashboard={isDashboard} />
+          {/* Global Footer (Hidden on focused Messaging and Auth views) */}
+          {!location.pathname.startsWith('/dashboard/messages') && !isAuthPath && (
+            <Footer isDashboard={isDashboard} />
+          )}
         </main>
       </div>
     </div>

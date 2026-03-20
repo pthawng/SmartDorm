@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authApi } from '@/services/endpoints/auth.api';
 import { useAuthStore } from '@/store/authStore';
-import { normalizeApiError } from '@/shared/lib/api-error';
 import { ROUTES } from '@/shared/config/routes';
 import type { LoginFormData, RegisterFormData } from '../types';
 
@@ -15,18 +13,33 @@ export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const navigate = useNavigate();
 
+  /**
+   * Simulated Login Flow as Tenant.
+   */
   const login = async (data: LoginFormData) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await authApi.login(data);
-      const { user, accessToken } = res.data.data;
-      localStorage.setItem('access_token', accessToken);
-      setAuth(user, accessToken);
-      navigate(ROUTES.DASHBOARD.HOME);
+      // High-Fidelity Simulation Delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const mockUser = {
+        id: 'mock-tenant-123',
+        email: data.email || 'alex@smartdorm.com',
+        full_name: 'Alex Tenant',
+        phone: '090-123-4567',
+        role: 'TENANT' as const,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      };
+      const mockToken = 'mock-jwt-token-tenant';
+
+      localStorage.setItem('access_token', mockToken);
+      setAuth(mockUser, mockToken);
+      // Redirect to dedicated Tenant Home
+      navigate(ROUTES.DASHBOARD.TENANT_HOME);
     } catch (err) {
-      const normalized = normalizeApiError(err);
-      setError(normalized.message);
+      setError('Simulated login failure. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -44,22 +57,32 @@ export function useRegister() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const navigate = useNavigate();
 
+  /**
+   * Simulated Registration Flow as Landlord.
+   */
   const register = async (data: RegisterFormData) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await authApi.register({
-        full_name: data.full_name,
-        email: data.email,
-        password: data.password,
-      });
-      const { user, accessToken } = res.data.data;
-      localStorage.setItem('access_token', accessToken);
-      setAuth(user, accessToken);
-      navigate(ROUTES.DASHBOARD.HOME);
+       // High-Fidelity Simulation Delay
+       await new Promise(resolve => setTimeout(resolve, 1000));
+
+       const mockUser = {
+         id: 'mock-landlord-456',
+         email: data.email || 'larry@smartdorm.com',
+         full_name: data.full_name || 'Landlord Larry',
+         phone: '091-888-9999',
+         role: 'LANDLORD' as const,
+         is_active: true,
+         created_at: new Date().toISOString(),
+       };
+       const mockToken = 'mock-jwt-token-landlord';
+
+       localStorage.setItem('access_token', mockToken);
+       setAuth(mockUser, mockToken);
+       navigate(ROUTES.DASHBOARD.HOME);
     } catch (err) {
-      const normalized = normalizeApiError(err);
-      setError(normalized.message);
+      setError('Simulated registration failure. Please try again.');
     } finally {
       setIsLoading(false);
     }

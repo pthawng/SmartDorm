@@ -19,6 +19,7 @@ export const ROUTES = {
     HOME: '/dashboard',
     TENANT_HOME: '/dashboard/tenant',
     WORKSPACES: '/dashboard/workspaces',
+    MESSAGES: '/dashboard/messages',
 
     // Properties
     PROPERTIES: '/dashboard/properties',
