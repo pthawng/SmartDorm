@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"smartdorm/shared/response"
 	"smartdorm/shared/middleware"
@@ -13,6 +14,10 @@ type Handler struct {
 
 func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
+}
+
+type UpdateStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=pending active"`
 }
 
 func (h *Handler) Create(c *gin.Context) {
@@ -53,4 +58,26 @@ func (h *Handler) List(c *gin.Context) {
 	// This is not paginated per the API Spec (`GET /api/v1/workspaces`).
 	// It just lists all workspaces the user is a member of.
 	response.OK(c, resp)
+}
+
+func (h *Handler) UpdateStatus(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	var req UpdateStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	if err := h.service.UpdateStatus(c.Request.Context(), id, req.Status); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.OK(c, gin.H{"message": "Workspace status updated successfully"})
 }

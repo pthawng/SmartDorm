@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	CreateWorkspaceTx(ctx context.Context, name string, userID uuid.UUID) (*Workspace, string, error)
 	ListUserWorkspaces(ctx context.Context, userID uuid.UUID) ([]*WorkspaceResponse, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 }
 
 type repository struct {
@@ -29,11 +30,11 @@ func (r *repository) CreateWorkspaceTx(ctx context.Context, name string, userID 
 	}
 	defer tx.Rollback()
 
-	// 1. Create Workspace
+	// 1. Create Workspace (Default: pending)
 	const qWorkspace = `
-		INSERT INTO workspaces (name, created_by)
-		VALUES ($1, $2)
-		RETURNING id, name, created_by, created_at, updated_at, deleted_at`
+		INSERT INTO workspaces (name, status, created_by)
+		VALUES ($1, 'pending', $2)
+		RETURNING id, name, status, created_by, created_at, updated_at, deleted_at`
 
 	var w Workspace
 	if err := tx.GetContext(ctx, &w, qWorkspace, name, userID); err != nil {
@@ -73,4 +74,10 @@ func (r *repository) ListUserWorkspaces(ctx context.Context, userID uuid.UUID) (
 	}
 
 	return workspaces, nil
+}
+
+func (r *repository) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
+	const q = `UPDATE workspaces SET status = $1, updated_at = NOW() WHERE id = $2`
+	_, err := r.db.ExecContext(ctx, q, status, id)
+	return err
 }

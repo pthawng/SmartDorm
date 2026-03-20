@@ -9,6 +9,7 @@ import (
 type Workspace struct {
 	ID        uuid.UUID  `db:"id"`
 	Name      string     `db:"name"`
+	Status    string     `db:"status"` // "pending", "active"
 	CreatedBy uuid.UUID  `db:"created_by"`
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt time.Time  `db:"updated_at"`

@@ -15,6 +15,10 @@ interface AuthResponse {
   user: UserData;
   accessToken: string;
   refreshToken: string;
+  context?: {
+    type: string;
+    workspace_id?: string;
+  };
 }
 
 export const authApi = {
@@ -35,4 +39,7 @@ export const authApi = {
 
   logout: () =>
     apiClient.post('/auth/logout', {}, { withCredentials: true }),
+
+  switchContext: (data: { context_type: string; workspace_id?: string }) =>
+    apiClient.post<ApiResponse<AuthResponse>>('/auth/switch-context', data),
 };

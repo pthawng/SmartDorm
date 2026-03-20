@@ -12,4 +12,7 @@ export const propertyApi = {
 
   getById: (id: string) =>
     apiClient.get<ApiResponse<PropertyData>>(`/properties/${id}`),
+
+  create: (data: Partial<PropertyData>, options?: { headers?: any }) =>
+    apiClient.post<ApiResponse<PropertyData>>('/properties', data, options),
 };

@@ -10,6 +10,7 @@ import (
 type Service interface {
 	CreateWorkspace(ctx context.Context, req CreateWorkspaceRequest, userID uuid.UUID) (*WorkspaceResponse, error)
 	GetWorkspaces(ctx context.Context, userID uuid.UUID) ([]*WorkspaceResponse, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 }
 
 type service struct {
@@ -47,4 +48,8 @@ func (s *service) GetWorkspaces(ctx context.Context, userID uuid.UUID) ([]*Works
 	}
 
 	return workspaces, nil
+}
+
+func (s *service) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
+	return s.repo.UpdateStatus(ctx, id, status)
 }

@@ -19,4 +19,10 @@ export const workspaceApi = {
 
   getMembers: (id: string) =>
     apiClient.get<PaginatedResponse<MembershipData>>(`/workspaces/${id}/members`),
+
+  create: (data: { name: string }) =>
+    apiClient.post<ApiResponse<WorkspaceData>>('/workspaces', data),
+
+  updateStatus: (id: string, status: 'pending' | 'active') =>
+    apiClient.patch<ApiResponse<void>>(`/workspaces/${id}/status`, { status }),
 };
