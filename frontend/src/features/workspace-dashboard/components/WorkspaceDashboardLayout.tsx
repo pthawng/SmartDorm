@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/config/routes';
 import { ErrorState } from '@/shared/ui';
 import { DashboardSkeleton } from '@/shared/ui/skeleton/DashboardSkeleton';
@@ -20,6 +20,11 @@ export function WorkspaceDashboardLayout() {
   
   // URL priority: Prevents bugs when localStorage has stale 'ws-1' dummy data
   const targetWorkspaceId = routeWorkspaceId || currentWorkspace?.id;
+
+  // Seamless UX: If the user hit /dashboard but hasn't selected a workspace, route them to the switcher
+  if (!targetWorkspaceId) {
+    return <Navigate to={ROUTES.DASHBOARD.WORKSPACES} replace />;
+  }
 
   const { 
     data: overviewData, 

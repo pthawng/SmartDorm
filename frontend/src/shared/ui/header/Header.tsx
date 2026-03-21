@@ -8,6 +8,7 @@ import { LandlordCTA } from './LandlordCTA';
 import { HeaderSearch } from './HeaderSearch';
 import { HeaderNavigationMenu } from './HeaderNavigationMenu';
 import { WorkspaceSwitcher } from '@/features/workspace-management/components/WorkspaceSwitcher';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import type { UserRole } from '@/entities/user';
 import { cn } from '@/shared/utils';
 
@@ -33,8 +34,9 @@ export function Header({
 }: HeaderProps) {
   const [isSwitching, setIsSwitching] = useState(false);
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const hasWorkspaces = useWorkspaceStore((s) => s.memberships.length > 0);
 
-  const isLandlord = userRole === 'LANDLORD' || (isDashboard && isLoggedIn);
+  const isLandlord = userRole === 'LANDLORD' || hasWorkspaces || (isDashboard && isLoggedIn);
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-slate-100 shadow-sm transition-all duration-500">

@@ -35,7 +35,7 @@ export function WorkspaceSwitcherFeature() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col bg-slate-50">
-        <main className="flex-1 mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8 w-full">
+        <main className="flex-1 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 w-full">
           <Loading message="Loading your workspaces..." />
         </main>
       </div>
@@ -46,7 +46,7 @@ export function WorkspaceSwitcherFeature() {
     const targetWs = workspaces?.find(w => w.id === isSwitchingId);
     return (
       <div className="flex min-h-screen flex-col bg-slate-50">
-        <main className="flex-1 mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8 w-full">
+        <main className="flex-1 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 w-full">
           <Loading message={`Switching to ${targetWs?.name || 'workspace'}...`} />
         </main>
       </div>
@@ -56,7 +56,7 @@ export function WorkspaceSwitcherFeature() {
   if (isError || !workspaces) {
     return (
       <div className="flex min-h-screen flex-col bg-slate-50">
-        <main className="flex-1 mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8 w-full">
+        <main className="flex-1 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 w-full">
           <ErrorState
             title="Failed to load workspaces"
             description="We encountered an error while fetching your portfolio data. Please try again."
@@ -71,7 +71,7 @@ export function WorkspaceSwitcherFeature() {
     <div className="flex min-h-screen flex-col bg-slate-50">
       {/* Main Content */}
 
-      <main className="flex-1 mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8 w-full">
+      <main className="flex-1 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 w-full">
         <WorkspaceHeader onCreate={handleCreateWorkspace} />
         
         <WorkspaceList

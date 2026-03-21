@@ -59,7 +59,7 @@ export function DepositPaymentFeature({ contractId }: { contractId: string }) {
       <header className="text-center space-y-3">
         <Badge variant="success" className="rounded-full px-4 py-1 font-black text-[9px] uppercase tracking-[0.3em] bg-emerald-50 text-emerald-600">Phase 04: Financial Execution</Badge>
         <h1 className="text-5xl font-display font-black text-slate-900 uppercase tracking-tighter">Security Deposit</h1>
-        <p className="text-slate-400 font-medium max-w-lg mx-auto italic">Execute payment to activate your legal lease agreement and secure your unit.</p>
+        <p className="text-slate-400 font-medium max-w-lg mx-auto italic">Execute payment to activate your legal lease agreement and secure your room.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-10">

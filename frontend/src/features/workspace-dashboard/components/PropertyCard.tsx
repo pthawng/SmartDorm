@@ -7,7 +7,7 @@ export interface PropertyCardData {
   name: string;
   location: string;
   status: 'draft' | 'published' | 'archived';
-  unitCount?: number;
+  roomCount?: number;
   thumbnailUrl?: string;
 }
 
@@ -65,7 +65,7 @@ export function PropertyCard({ property, onAction }: PropertyCardProps) {
 
         <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
           <div className="text-sm font-semibold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg">
-            {property.unitCount || 0} Units
+            {property.roomCount || 0} Rooms
           </div>
           
           {/* Quick Actions */}

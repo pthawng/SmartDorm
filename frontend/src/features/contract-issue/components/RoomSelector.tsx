@@ -24,7 +24,7 @@ export function RoomSelector({ onSelect }: RoomSelectorProps) {
     <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
       <header>
         <h3 className="text-2xl font-display font-black text-slate-900 uppercase tracking-tighter">Inventory Selection</h3>
-        <p className="text-slate-500 font-medium">Choose an available unit to begin the lease issuance protocol.</p>
+        <p className="text-slate-500 font-medium">Choose an available room to begin the lease issuance protocol.</p>
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

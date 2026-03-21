@@ -5,8 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"smartdorm/shared/response"
+	apperr "smartdorm/shared/errors"
 	"smartdorm/shared/middleware"
+	"smartdorm/shared/response"
 )
 
 type Handler struct {
@@ -89,7 +90,7 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 func (h *Handler) GetDashboard(c *gin.Context) {
 	workspaceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		response.Error(c, err)
+		response.Error(c, apperr.New(apperr.CodeValidation, "invalid workspace ID format"))
 		return
 	}
 

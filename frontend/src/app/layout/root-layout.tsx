@@ -15,6 +15,7 @@ export function RootLayout() {
     location.pathname === '/dashboard' ||
     location.pathname === '/dashboard/' ||
     location.pathname.startsWith('/workspaces') ||
+    location.pathname.startsWith('/dashboard/workspaces') ||
     location.pathname.startsWith('/dashboard/tenant') || 
     location.pathname.startsWith('/dashboard/contracts') ||
     location.pathname.startsWith('/dashboard/invoices') ||

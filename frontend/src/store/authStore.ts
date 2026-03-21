@@ -46,6 +46,15 @@ export const useAuthStore = create<AuthState>()(
             accessToken,
             isAuthenticated: true,
           });
+
+          // Crucial UX Fix: Eagerly fetch workspaces to instantly inform UI components (like the Header) whether the user owns properties.
+          // This prevents the "Become a Landlord" CTA from appearing for existing Landlords on public routes.
+          try {
+            const { useWorkspaceStore } = await import('./workspaceStore');
+            await useWorkspaceStore.getState().fetchWorkspaces();
+          } catch (wsError) {
+            console.error('[AuthStore] Failed to eager-fetch workspaces during hydration:', wsError);
+          }
         } catch (error) {
           useAuthStore.getState().logout();
           throw error;
