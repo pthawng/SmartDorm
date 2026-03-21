@@ -21,7 +21,7 @@ func NewHandler(service Service) *Handler {
 func (h *Handler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Error(c, err) // gin binding errors aren't directly app errors, but handler can wrap them or rely on robust binding parsing later. For MVP, wrap in validation logic.
+		response.Error(c, errors.New(errors.CodeValidation, "Invalid request body", errors.WithErr(err)))
 		return
 	}
 
@@ -42,7 +42,7 @@ func (h *Handler) Register(c *gin.Context) {
 func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Error(c, err)
+		response.Error(c, errors.New(errors.CodeValidation, "Invalid request body", errors.WithErr(err)))
 		return
 	}
 
@@ -63,7 +63,7 @@ func (h *Handler) Login(c *gin.Context) {
 func (h *Handler) SwitchContext(c *gin.Context) {
 	var req TokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Error(c, err)
+		response.Error(c, errors.New(errors.CodeValidation, "Invalid request body", errors.WithErr(err)))
 		return
 	}
 
