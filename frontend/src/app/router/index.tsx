@@ -129,6 +129,13 @@ export const router = createBrowserRouter([
           { path: 'applications',         element: <ApplicationsPage /> },
         ],
       },
+      {
+        path: '/workspaces/:id',
+        element: <DashboardLayout />,
+        children: [
+          { index: true, element: <DashboardHome /> },
+        ],
+      },
 
       // Catch-all
       { path: '*', element: <NotFoundPage /> },

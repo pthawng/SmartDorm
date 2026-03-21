@@ -17,5 +17,6 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler, jwtIssuer *jwt.Is
 		wsGroup.POST("", handler.Create)
 		wsGroup.GET("", handler.List)
 		wsGroup.PATCH("/:id/status", handler.UpdateStatus)
+		wsGroup.GET("/:id/dashboard", handler.GetDashboard)
 	}
 }

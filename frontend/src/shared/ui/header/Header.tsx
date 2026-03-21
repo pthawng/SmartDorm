@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, X, LayoutGrid } from 'lucide-react';
+import { Loader2, Menu, X } from 'lucide-react';
 import { HeaderLogo } from './HeaderLogo';
 import { HeaderNav } from './HeaderNav';
 import { HeaderUserMenu } from './HeaderUserMenu';
@@ -81,7 +81,7 @@ export function Header({
                     : "text-slate-400 border-transparent hover:border-slate-100 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
-                {isNavOpen ? <X className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+                {isNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
 
               {isNavOpen && (

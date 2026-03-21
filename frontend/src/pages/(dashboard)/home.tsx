@@ -2,8 +2,8 @@
  * Landlord Dashboard / Admin Overview Page — THIN PAGE.
  */
 
-import { DashboardOverviewFeature } from '@/features/dashboard-overview';
+import { WorkspaceDashboardLayout } from '@/features/workspace-dashboard/components/WorkspaceDashboardLayout';
 
 export default function AdminDashboardPage() {
-  return <DashboardOverviewFeature />;
+  return <WorkspaceDashboardLayout />;
 }

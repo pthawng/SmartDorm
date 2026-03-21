@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS property_images;
+
+ALTER TABLE properties 
+DROP COLUMN IF EXISTS type,
+DROP COLUMN IF EXISTS status,
+DROP COLUMN IF EXISTS amenities;

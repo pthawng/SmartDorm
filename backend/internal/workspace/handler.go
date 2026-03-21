@@ -85,3 +85,25 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 
 	response.OK(c, gin.H{"message": "Workspace status updated successfully"})
 }
+
+func (h *Handler) GetDashboard(c *gin.Context) {
+	workspaceID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	stats, err := h.service.GetDashboardStats(c.Request.Context(), workspaceID, userID)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.OK(c, stats)
+}

@@ -7,13 +7,14 @@ import { useAuthStore } from '@/store/authStore';
 export function RootLayout() {
   const { user, isAuthenticated } = useAuthStore();
   const location = useLocation();
-  const isDashboard = location.pathname.includes('/dashboard');
+  const isDashboard = location.pathname.includes('/dashboard') || location.pathname.startsWith('/workspaces');
   const isAuthPath = location.pathname === '/login' || location.pathname === '/register';
   
   // Immersive feel: Tenant screens and general dashboard now use the full width airy layout.
   const isImmersivePath = 
     location.pathname === '/dashboard' ||
     location.pathname === '/dashboard/' ||
+    location.pathname.startsWith('/workspaces') ||
     location.pathname.startsWith('/dashboard/tenant') || 
     location.pathname.startsWith('/dashboard/contracts') ||
     location.pathname.startsWith('/dashboard/invoices') ||

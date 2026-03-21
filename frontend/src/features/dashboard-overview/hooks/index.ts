@@ -1,15 +1,30 @@
 import { useQuery } from '@tanstack/react-query';
-import { MOCK_DASHBOARD_DATA } from '../services/mock-data';
-import type { DashboardOverviewData } from '../types';
+import { apiClient } from '@/services/apiClient';
 
-export function useDashboardOverview() {
+export interface DashboardOverviewData {
+  stats: {
+    totalProperties: number;
+    totalRooms: number;
+    occupancyRate: number;
+    totalRevenue: number;
+  };
+}
+
+export function useDashboardOverview(workspaceId?: string) {
   return useQuery<DashboardOverviewData>({
-    queryKey: ['dashboard', 'overview'],
+    queryKey: ['dashboard', 'overview', workspaceId],
     queryFn: async () => {
-      // simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return MOCK_DASHBOARD_DATA;
+      const { data } = await apiClient.get(`/workspaces/${workspaceId}/dashboard`);
+      return {
+        stats: {
+          totalProperties: data.total_properties,
+          totalRooms: data.total_rooms,
+          occupancyRate: data.occupancy_rate,
+          totalRevenue: data.monthly_revenue,
+        }
+      };
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!workspaceId,
+    staleTime: 5 * 60 * 1000, 
   });
 }

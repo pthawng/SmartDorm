@@ -18,5 +18,13 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler, jwtIssuer *jwt.Is
 		propGroup.GET("/:id", handler.Get)
 		propGroup.PATCH("/:id", handler.Update)
 		propGroup.DELETE("/:id", handler.Delete)
+
+		// Lifecycle
+		propGroup.POST("/:id/publish", handler.Publish)
+
+		// Images
+		propGroup.POST("/:id/images", handler.AddImage)
+		propGroup.DELETE("/:id/images/:imageId", handler.DeleteImage)
+		propGroup.PATCH("/:id/images/:imageId/primary", handler.SetPrimaryImage)
 	}
 }

@@ -157,3 +157,113 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	response.NoContent(c)
 }
+
+func (h *Handler) Publish(c *gin.Context) {
+	workspaceID, err := middleware.GetWorkspaceID(c)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	resp, err := h.service.Publish(c.Request.Context(), workspaceID, id)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	// Audit Log
+	userID, _ := middleware.GetUserID(c)
+	audit.LogMutation(c.Request.Context(), userID, audit.ActionUpdate, "PROPERTY_PUBLISH", id.String(), &workspaceID)
+
+	response.OK(c, resp)
+}
+
+// --- Images ---
+
+func (h *Handler) AddImage(c *gin.Context) {
+	workspaceID, err := middleware.GetWorkspaceID(c)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	propertyID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	var req AddPropertyImageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	resp, err := h.service.AddImage(c.Request.Context(), workspaceID, propertyID, req.URL, req.IsPrimary, req.DisplayOrder)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.Created(c, resp)
+}
+
+func (h *Handler) DeleteImage(c *gin.Context) {
+	workspaceID, err := middleware.GetWorkspaceID(c)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	propertyID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	imageID, err := uuid.Parse(c.Param("imageId"))
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	if err := h.service.DeleteImage(c.Request.Context(), workspaceID, propertyID, imageID); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.NoContent(c)
+}
+
+func (h *Handler) SetPrimaryImage(c *gin.Context) {
+	workspaceID, err := middleware.GetWorkspaceID(c)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	propertyID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	imageID, err := uuid.Parse(c.Param("imageId"))
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	if err := h.service.SetPrimaryImage(c.Request.Context(), workspaceID, propertyID, imageID); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.OK(c, nil)
+}

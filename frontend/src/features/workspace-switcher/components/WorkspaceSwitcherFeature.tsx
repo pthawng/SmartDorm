@@ -25,7 +25,7 @@ export function WorkspaceSwitcherFeature() {
     setIsSwitchingId(workspace.id);
     try {
       await switchContext(workspace.id);
-      navigate(ROUTES.DASHBOARD.HOME);
+      navigate(ROUTES.DASHBOARD.WORKSPACE_DETAIL(workspace.id));
     } catch (error) {
       console.error('Failed to switch workspace:', error);
       setIsSwitchingId(null);

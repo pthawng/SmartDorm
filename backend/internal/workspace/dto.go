@@ -21,3 +21,10 @@ type WorkspaceResponse struct {
 	CreatedAt      time.Time `json:"created_at" db:"created_at"`
 	MembershipRole string    `json:"membership_role,omitempty" db:"membership_role"` // Included when requested by a specific user context
 }
+
+type DashboardStatsResponse struct {
+	TotalProperties int     `json:"total_properties"`
+	TotalRooms      int     `json:"total_rooms"`
+	OccupancyRate   float64 `json:"occupancy_rate"`
+	MonthlyRevenue  float64 `json:"monthly_revenue"`
+}

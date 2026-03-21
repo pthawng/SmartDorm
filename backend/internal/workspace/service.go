@@ -11,6 +11,7 @@ type Service interface {
 	CreateWorkspace(ctx context.Context, req CreateWorkspaceRequest, userID uuid.UUID) (*WorkspaceResponse, error)
 	GetWorkspaces(ctx context.Context, userID uuid.UUID) ([]*WorkspaceResponse, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
+	GetDashboardStats(ctx context.Context, workspaceID, userID uuid.UUID) (*DashboardStatsResponse, error)
 }
 
 type service struct {
@@ -53,4 +54,16 @@ func (s *service) GetWorkspaces(ctx context.Context, userID uuid.UUID) ([]*Works
 
 func (s *service) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
 	return s.repo.UpdateStatus(ctx, id, status)
+}
+
+func (s *service) GetDashboardStats(ctx context.Context, workspaceID, userID uuid.UUID) (*DashboardStatsResponse, error) {
+	isMember, err := s.repo.IsMember(ctx, workspaceID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, apperr.NewForbidden("user is not a member of this workspace")
+	}
+
+	return s.repo.GetDashboardStats(ctx, workspaceID)
 }

@@ -21,11 +21,13 @@ export const ROUTES = {
     HOME: '/dashboard',
     TENANT_HOME: '/dashboard/tenant',
     WORKSPACES: '/dashboard/workspaces',
+    WORKSPACE_DETAIL: (id: string) => `/workspaces/${id}`,
     MESSAGES: '/dashboard/messages',
     APPLICATIONS: '/dashboard/applications',
 
     // Properties
     PROPERTIES: '/dashboard/properties',
+    PROPERTY_NEW: '/dashboard/properties/new',
 
     // Rooms
     ROOMS: '/dashboard/rooms',
