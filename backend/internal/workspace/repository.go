@@ -62,15 +62,20 @@ func (r *repository) CreateWorkspaceTx(ctx context.Context, name string, userID 
 
 func (r *repository) ListUserWorkspaces(ctx context.Context, userID uuid.UUID) ([]*WorkspaceResponse, error) {
 	const q = `
-		SELECT w.id, w.name, w.created_by, m.role AS membership_role
+		SELECT w.id, w.name, w.created_by, w.created_at, m.role AS membership_role
 		FROM workspaces w
 		JOIN memberships m ON w.id = m.workspace_id
 		WHERE m.user_id = $1 AND w.deleted_at IS NULL
 		ORDER BY w.created_at DESC`
 
-	var workspaces []*WorkspaceResponse
-	if err := r.db.SelectContext(ctx, &workspaces, q, userID); err != nil {
+	var list []WorkspaceResponse
+	if err := r.db.SelectContext(ctx, &list, q, userID); err != nil {
 		return nil, err
+	}
+
+	workspaces := make([]*WorkspaceResponse, len(list))
+	for i := range list {
+		workspaces[i] = &list[i]
 	}
 
 	return workspaces, nil

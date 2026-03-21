@@ -21,7 +21,7 @@ export function FooterSection({ title, links }: FooterSectionProps) {
       </h4>
       <ul className="space-y-3">
         {links.map((link) => (
-          <li key={link.path}>
+          <li key={link.label}>
             <Link 
               to={link.path} 
               className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors leading-none"

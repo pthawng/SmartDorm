@@ -28,6 +28,7 @@ const BecomeLandlordPage = lazy(() => import('@/pages/(auth)/become-landlord'));
 const DashboardHome       = lazy(() => import('@/pages/(dashboard)/home'));
 const TenantHome          = lazy(() => import('@/pages/(dashboard)/tenant-home'));
 const WorkspacesPage      = lazy(() => import('@/pages/(dashboard)/workspaces'));
+const LandlordSetupPage = lazy(() => import('@/pages/(dashboard)/workspaces/setup'));
 const PropertyListPage    = lazy(() => import('@/pages/(dashboard)/properties/list'));
 const RoomListPage        = lazy(() => import('@/pages/(dashboard)/rooms/list'));
 const RoomEditPage        = lazy(() => import('@/pages/(dashboard)/rooms/edit'));
@@ -103,6 +104,7 @@ export const router = createBrowserRouter([
           { index: true,                   element: <DashboardHome /> },
           { path: 'tenant',               element: <TenantHome /> },
           { path: 'workspaces',           element: <WorkspacesPage /> },
+          { path: 'workspaces/setup',     element: <LandlordSetupPage /> },
           { path: 'properties',           element: <PropertyListPage /> },
           { path: 'rooms',                element: <RoomListPage /> },
           { path: 'rooms/:id/edit',       element: <RoomEditPage /> },

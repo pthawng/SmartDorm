@@ -12,6 +12,7 @@ interface AuthState {
   isAuthenticated: boolean;
   setAuth: (user: UserData, token: string) => void;
   hydrateAuth: () => Promise<void>;
+  switchContext: (workspaceId: string) => Promise<any>;
   logout: () => void;
 }
 
@@ -22,27 +23,68 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       isAuthenticated: false,
 
-      setAuth: (user, token) =>
-        set({
-          user,
+      setAuth: (user, token) => {
+        localStorage.setItem('access_token', token);
+        set((state) => ({
+          user: { 
+            ...user, 
+            role: user.role || state.user?.role || 'TENANT' 
+          },
           accessToken: token,
           isAuthenticated: true,
-        }),
+        }));
+      },
 
       hydrateAuth: async () => {
         try {
-          // Dynamic import to avoid circular dependency
           const { authApi } = await import('@/services/endpoints/auth.api');
           const { data } = await authApi.refreshToken();
+          const { user: userData, accessToken, context } = data.data;
+          localStorage.setItem('access_token', accessToken);
           set({
-            user: data.data.user,
-            accessToken: data.data.accessToken,
+            user: { ...userData, role: (context?.type || 'TENANT') as any },
+            accessToken,
             isAuthenticated: true,
           });
         } catch (error) {
           useAuthStore.getState().logout();
           throw error;
         }
+      },
+
+      switchContext: async (workspaceId: string) => {
+        const { authApi } = await import('@/services/endpoints/auth.api');
+        const { data: response } = await authApi.switchContext({
+          context_type: 'workspace',
+          workspace_id: workspaceId,
+        });
+
+        const { user: userData, accessToken, context } = response.data;
+        const user = { ...userData, role: (context?.type || 'LANDLORD') as any };
+        
+        // Sync both stores from the same atomic response
+        localStorage.setItem('access_token', accessToken);
+        set({
+          user,
+          accessToken,
+          isAuthenticated: true,
+        });
+
+        // Source of truth for workspace context in workspaceStore
+        const { useWorkspaceStore } = await import('./workspaceStore');
+        const workspaceStore = useWorkspaceStore.getState();
+        
+        const activeWorkspace = 
+          user.memberships?.find(m => m.workspace_id === workspaceId)?.workspace ||
+          workspaceStore.memberships.find(m => m.workspace_id === workspaceId)?.workspace;
+        
+        if (activeWorkspace) {
+          workspaceStore.setCurrentWorkspace(activeWorkspace as any);
+        } else {
+          localStorage.setItem('workspace_id', workspaceId);
+        }
+
+        return response.data; // Return full response for hooks to use
       },
 
       logout: () => {

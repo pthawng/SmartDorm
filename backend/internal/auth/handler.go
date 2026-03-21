@@ -118,7 +118,9 @@ func (h *Handler) GetMe(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.GetUser(c.Request.Context(), userID)
+	role, _ := middleware.GetActiveRole(c)
+
+	resp, err := h.service.GetUser(c.Request.Context(), userID, role)
 	if err != nil {
 		response.Error(c, err)
 		return

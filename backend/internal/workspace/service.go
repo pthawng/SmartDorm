@@ -32,6 +32,7 @@ func (s *service) CreateWorkspace(ctx context.Context, req CreateWorkspaceReques
 		ID:             w.ID,
 		Name:           w.Name,
 		CreatedBy:      w.CreatedBy,
+		CreatedAt:      w.CreatedAt,
 		MembershipRole: role,
 	}, nil
 }

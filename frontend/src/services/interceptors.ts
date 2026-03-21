@@ -10,12 +10,12 @@ export function setupInterceptors(client: AxiosInstance): void {
   // ── Request Interceptor ────────────────────────────────────
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      // Attach JWT
+      // Attach JWT from localStorage (Synced by AuthStore manually to avoid circular deps)
       const token = localStorage.getItem('access_token');
+      
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-
 
       return config;
     },

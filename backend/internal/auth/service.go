@@ -6,12 +6,12 @@ import (
 	"errors"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 
-	"smartdorm/shared/jwt"
 	"smartdorm/shared/audit"
 	apperr "smartdorm/shared/errors"
+	"smartdorm/shared/jwt"
 )
 
 // Service defines the business logic interfaces
@@ -19,7 +19,7 @@ type Service interface {
 	Register(ctx context.Context, req RegisterRequest) (*UserResponse, error)
 	Login(ctx context.Context, req LoginRequest) (*LoginResponse, error)
 	SwitchContext(ctx context.Context, req TokenRequest, userID uuid.UUID) (*TokenResponse, error)
-	GetUser(ctx context.Context, userID uuid.UUID) (*UserResponse, error)
+	GetUser(ctx context.Context, userID uuid.UUID, role string) (*UserResponse, error)
 	Refresh(ctx context.Context, refreshToken string) (*TokenResponse, error)
 	Logout(ctx context.Context, refreshToken string) error
 }
@@ -76,6 +76,7 @@ func (s *service) Register(ctx context.Context, req RegisterRequest) (*UserRespo
 		Email:        user.Email,
 		FullName:     user.FullName,
 		Phone:        user.Phone,
+		Role:         string(jwt.RoleTenant),
 		RefreshToken: refreshToken,
 	}, nil
 }
@@ -150,6 +151,7 @@ func (s *service) Login(ctx context.Context, req LoginRequest) (*LoginResponse, 
 			Email:    user.Email,
 			FullName: user.FullName,
 			Phone:    user.Phone,
+			Role:     string(jwt.RoleTenant),
 		},
 		Contexts: contexts,
 	}
@@ -178,7 +180,7 @@ func (s *service) SwitchContext(ctx context.Context, req TokenRequest, userID uu
 			return nil, apperr.NewInternal(err, "failed to verify user identity")
 		}
 		token, err := s.jwtIssuer.GenerateTenantToken(userID, u.SecurityStamp)
-		
+
 		// Audit Log: Switch Role
 		audit.LogMutation(ctx, userID, audit.ActionSwitch, "AUTH", "TENANT", nil)
 
@@ -227,13 +229,14 @@ func (s *service) buildTokenResponse(ctx context.Context, userID uuid.UUID, toke
 	}
 
 	expiresAt := time.Now().Add(1 * time.Hour).Format(time.RFC3339)
-	
+
 	resp := &TokenResponse{
 		User: UserResponse{
 			ID:       user.ID,
 			Email:    user.Email,
 			FullName: user.FullName,
 			Phone:    user.Phone,
+			Role:     role,
 		},
 		AccessToken: token,
 		ExpiresAt:   expiresAt,
@@ -258,7 +261,7 @@ func (s *service) buildTokenResponse(ctx context.Context, userID uuid.UUID, toke
 	return resp, nil
 }
 
-func (s *service) GetUser(ctx context.Context, userID uuid.UUID) (*UserResponse, error) {
+func (s *service) GetUser(ctx context.Context, userID uuid.UUID, role string) (*UserResponse, error) {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -271,6 +274,7 @@ func (s *service) GetUser(ctx context.Context, userID uuid.UUID) (*UserResponse,
 		Email:    user.Email,
 		FullName: user.FullName,
 		Phone:    user.Phone,
+		Role:     role,
 	}, nil
 }
 
@@ -344,7 +348,7 @@ func (s *service) Refresh(ctx context.Context, refreshToken string) (*TokenRespo
 
 	// 5. Update DB: Delete OLD, Store NEW (Carry over context)
 	s.repo.DeleteRefreshToken(ctx, rt.ID)
-	
+
 	newRTID := uuid.New()
 	newExp := time.Now().Add(7 * 24 * time.Hour)
 	err = s.repo.StoreRefreshToken(ctx, newRTID, rt.UserID, newRT, newExp, rt.ActiveRole, rt.WorkspaceID, rt.DeviceID, user.SecurityStamp)
@@ -362,6 +366,7 @@ func (s *service) Refresh(ctx context.Context, refreshToken string) (*TokenRespo
 			Email:    user.Email,
 			FullName: user.FullName,
 			Phone:    user.Phone,
+			Role:     rt.ActiveRole,
 		},
 		AccessToken:  newAT,
 		RefreshToken: newRT,

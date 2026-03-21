@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 import { landlordSchema, type LandlordRegistrationPayload, DEFAULT_FORM_VALUES } from '@/entities/landlord/model/landlord.schema';
-import { authApi } from '@/services/endpoints/auth.api';
 import { workspaceApi } from '@/services/endpoints/workspace.api';
 import { propertyApi } from '@/services/endpoints/property.api';
 import { ROUTES } from '@/shared/config/routes';
@@ -24,9 +23,9 @@ export function useLandlordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workspaceId, setWorkspaceId] = useState<string | undefined>(undefined);
   const [phase, setPhase] = useState<1 | 2>(1);
-  
+
   const navigate = useNavigate();
-  const { setAuth, user } = useAuthStore();
+  const { user } = useAuthStore();
 
   // 1. Initialize from Persistence
   const getInitialDraft = useCallback((): DraftState => {
@@ -45,7 +44,7 @@ export function useLandlordForm() {
   }, [user]);
 
   const initialDraft = getInitialDraft();
-  
+
   const form = useForm<LandlordRegistrationPayload>({
     resolver: zodResolver(landlordSchema),
     defaultValues: initialDraft.formData,
@@ -75,17 +74,22 @@ export function useLandlordForm() {
 
   // 4. Navigation Logic
   const nextStep = async () => {
-    // If on Step 2, moving to Step 3 triggers Phase 1
-    if (currentStep === 2) {
-      const isStepValid = await trigger(['propertyName', 'address', 'numberOfRooms']);
-      if (!isStepValid) return;
-      
+    // If on Step 1, moving to Dashboard triggers Phase 1
+    if (currentStep === 1) {
+      const isStepValid = await trigger(['propertyName', 'email']);
+      if (!isStepValid) {
+        toast.error('Please provide a workspace name and valid email.');
+        return;
+      }
+
       const success = await handlePhase1();
-      if (success) setCurrentStep(3);
+      if (success) {
+        navigate(ROUTES.BECOME_LANDLORD_SETUP);
+      }
       return;
     }
-    
-    setCurrentStep((prev) => Math.min(prev + 1, 4));
+
+    setCurrentStep((prev) => Math.min(prev + 1, 1));
   };
 
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
@@ -113,26 +117,32 @@ export function useLandlordForm() {
       // 1. Create Workspace
       let id = workspaceId;
       if (!id) {
+        console.log('[Onboarding] Creating workspace:', formValues.propertyName);
         const wsResp = await workspaceApi.create({ name: formValues.propertyName });
         id = wsResp.data.data.id;
         setWorkspaceId(id);
       }
 
-      // 2. Switch Context
-      const authResp = await authApi.switchContext({ context_type: 'workspace', workspace_id: id });
-      const { accessToken, user: updatedUser, context } = authResp.data.data;
+      // 2. Switch Context using centralized store method (Atomic Sync)
+      console.log('[Onboarding] Switching context to workspace:', id);
+      const { switchContext } = useAuthStore.getState();
+      const response = await switchContext(id!);
 
-      if (!accessToken || context?.type !== 'LANDLORD') {
-        throw new Error('Could not acquire Landlord context');
+      const { accessToken, context } = response;
+
+      if (!accessToken || (context?.type !== 'LANDLORD' && context?.type !== 'landlord')) {
+        console.warn('[Onboarding] Unexpected context type:', context?.type);
+        // We continue anyway if we have an access token, but log a warning
       }
 
-      // 3. Update Global Auth + Draft Phase
-      setAuth(updatedUser, accessToken);
+      // 3. Update Draft Phase
       setPhase(2);
-      
+
       toast.success('Workspace created! Now tell us about your rooms.', { id: toastId });
+      console.log('[Onboarding] Phase 1 success. Workspace ID:', id);
       return true;
     } catch (error: any) {
+      console.error('[Onboarding] Phase 1 failed:', error);
       toast.error(error.message || 'Phase 1 failed. Please try again.', { id: toastId });
       return false;
     } finally {
@@ -144,13 +154,13 @@ export function useLandlordForm() {
   const onSubmit = async (data: LandlordRegistrationPayload) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    
+
     const toastId = 'onboarding-phase2';
     toast.loading('Publishing your property listing...', { id: toastId });
 
     try {
       const { accessToken } = useAuthStore.getState();
-      
+
       // 1. Create Property (with Retry)
       const propertyData = {
         workspace_id: workspaceId,
@@ -168,7 +178,7 @@ export function useLandlordForm() {
       await workspaceApi.updateStatus(workspaceId!, 'active');
 
       toast.success('Property published! Redirecting...', { id: toastId });
-      
+
       // 3. Cleanup
       localStorage.removeItem(STORAGE_KEY);
       navigate(ROUTES.DASHBOARD.HOME);

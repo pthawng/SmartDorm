@@ -30,6 +30,7 @@ type UserResponse struct {
 	Email        string    `json:"email"`
 	FullName     string    `json:"full_name"`
 	Phone        *string   `json:"phone,omitempty"`
+	Role         string    `json:"role"`
 	RefreshToken string    `json:"-"` // Internal use for setting cookie
 }
 

@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
@@ -23,18 +24,21 @@ type UpdateStatusRequest struct {
 func (h *Handler) Create(c *gin.Context) {
 	var req CreateWorkspaceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("[WorkspaceHandler] Bind error: %v\n", err)
 		response.Error(c, err)
 		return
 	}
 
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
+		fmt.Printf("[WorkspaceHandler] UserID error: %v\n", err)
 		response.Error(c, err)
 		return
 	}
 
 	resp, err := h.service.CreateWorkspace(c.Request.Context(), req, userID)
 	if err != nil {
+		fmt.Printf("[WorkspaceHandler] Service error: %v\n", err)
 		response.Error(c, err)
 		return
 	}

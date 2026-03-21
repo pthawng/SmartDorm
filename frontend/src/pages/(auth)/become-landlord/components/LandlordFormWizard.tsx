@@ -2,42 +2,30 @@ import { Button } from '@/shared/ui/Button';
 import { Progress } from '@/shared/ui/Progress';
 import { useLandlordForm } from '../hooks/useLandlordForm';
 
-// Steps components with correct casing
-import { BasicInfoStep } from './steps/BasicInfoStep';
-import { PropertyInfoStep } from './steps/PropertyInfoStep';
-import { PricingStep } from './steps/PricingStep';
-import { ReviewStep } from './steps/ReviewStep';
+import { ActivateLandlordStep } from './steps/ActivateLandlordStep';
 
 export function LandlordFormWizard() {
-  const { 
+  const {
     form,
-    currentStep, 
-    nextStep, 
-    prevStep, 
-    onSubmit, 
+    currentStep,
+    nextStep,
+    prevStep,
     isSubmitting,
     phase,
   } = useLandlordForm();
 
-  const progress = (currentStep / 4) * 100;
+  const progress = (currentStep / 1) * 100;
 
   const renderStep = () => {
     switch (currentStep) {
-      case 1: return <BasicInfoStep form={form} />;
-      case 2: return <PropertyInfoStep form={form} />;
-      case 3: return <PricingStep form={form} />;
-      case 4: return <ReviewStep form={form} />;
+      case 1: return <ActivateLandlordStep form={form} />;
       default: return null;
     }
   };
 
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentStep < 4) {
-      await nextStep();
-    } else {
-      await onSubmit(e);
-    }
+    await nextStep();
   };
 
   return (
@@ -47,10 +35,10 @@ export function LandlordFormWizard() {
         <div className="flex justify-between items-center mb-4">
           <div className="flex flex-col">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-              Step {currentStep} of 4
+              Step {currentStep} of 1
             </span>
             <span className="text-[9px] font-bold text-sky-500 mt-0.5">
-              {phase === 1 ? 'Phase 1: Registration' : 'Phase 2: Property Setup'}
+              Phase 1: Workspace Activation
             </span>
           </div>
           <span className="text-xs font-bold text-sky-600">
@@ -85,7 +73,7 @@ export function LandlordFormWizard() {
                 </span>
               )}
             </div>
-            
+
             <Button
               type="submit"
               disabled={isSubmitting}
@@ -93,10 +81,8 @@ export function LandlordFormWizard() {
             >
               {isSubmitting ? (
                 'Processing...'
-              ) : currentStep === 2 ? (
+              ) : currentStep === 1 ? (
                 'Create Workspace'
-              ) : currentStep === 4 ? (
-                'Publish Property'
               ) : (
                 'Continue'
               )}

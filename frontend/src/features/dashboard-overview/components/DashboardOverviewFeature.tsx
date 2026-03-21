@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import { Loading, ErrorState } from '@/shared/ui';
 import { useDashboardOverview } from '../hooks';
 
@@ -6,6 +7,7 @@ import { StatsCard } from './StatsCard';
 import { RevenueChart } from './RevenueChart';
 import { RoomStatusOverview } from './RoomStatusOverview';
 import { RecentTransactionsTable } from './RecentTransactionsTable';
+import { EmptyWorkspaceDashboard } from '@/features/workspace-management/components/EmptyWorkspaceDashboard';
 
 const vndFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -14,6 +16,7 @@ const vndFormatter = new Intl.NumberFormat('vi-VN', {
 });
 
 export function DashboardOverviewFeature() {
+  const location = useLocation();
   const { data, isLoading, isError, refetch } = useDashboardOverview();
 
   if (isLoading) {
@@ -33,11 +36,26 @@ export function DashboardOverviewFeature() {
   }
 
   const { stats, revenueChart, roomStatuses, recentInvoices } = data;
+  const isNewlyCreated = new URLSearchParams(location.search).get('new') === 'true';
+
+  // If there are no rooms, show the context-aware empty state
+  if (stats.totalRooms === 0) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <DashboardHeader />
+        <EmptyWorkspaceDashboard 
+          isJustCreated={isNewlyCreated} 
+          onAddProperty={() => console.log('Navigate to Add Property')} 
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* 1. Dashboard Header */}
       <DashboardHeader />
+      {/* ... rest of the component remains the same ... */}
 
       {/* 2. Key Stats Cards (Top row, 3 cards) */}
       <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">

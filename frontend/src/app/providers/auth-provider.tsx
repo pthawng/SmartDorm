@@ -13,7 +13,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // If no token, try a silent refresh to restore session
     if (!accessToken) {
       authApi.refreshToken()
-        .then((res) => setAuth(res.data.data.user, res.data.data.accessToken))
+        .then((res) => {
+          const { user, accessToken } = res.data.data;
+          setAuth(user, accessToken);
+        })
         .catch(() => {
           // Silent fail — user stays unauthenticated
         });
@@ -22,7 +25,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // If we have a token, just verify it
     authApi.me()
-      .then((res) => setAuth(res.data.data, accessToken))
+      .then((res) => {
+        // Merge the active role from the response
+        setAuth(res.data.data, accessToken);
+      })
       .catch(() => logout());
   }, [accessToken, setAuth, logout]);
 

@@ -14,4 +14,5 @@ export interface UserData {
   role: UserRole;
   is_active: boolean;
   created_at: ISOString;
+  memberships?: any[]; // Using any[] for now to avoid circular dependency in types if needed, or specialized membership type
 }

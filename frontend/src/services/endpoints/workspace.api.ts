@@ -9,7 +9,7 @@ import type { MembershipData } from '@/entities/membership';
 
 export const workspaceApi = {
   getAll: () =>
-    apiClient.get<PaginatedResponse<WorkspaceData>>('/workspaces'),
+    apiClient.get<ApiResponse<WorkspaceData[]>>('/workspaces'),
 
   getById: (id: string) =>
     apiClient.get<ApiResponse<WorkspaceData>>(`/workspaces/${id}`),

@@ -13,6 +13,8 @@ export const ROUTES = {
   // Auth
   LOGIN: '/login',
   REGISTER: '/register',
+  BECOME_LANDLORD: '/become-landlord',
+  BECOME_LANDLORD_SETUP: '/dashboard/workspaces/setup',
 
   // Dashboard
   DASHBOARD: {
