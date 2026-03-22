@@ -1,6 +1,8 @@
 package property
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 
 	"smartdorm/shared/response"
@@ -33,7 +35,13 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.Create(c.Request.Context(), workspaceID, req)
+	idempotencyKey := c.GetHeader("Idempotency-Key")
+	var keyPtr *string
+	if idempotencyKey != "" {
+		keyPtr = &idempotencyKey
+	}
+
+	resp, err := h.service.Create(c.Request.Context(), workspaceID, keyPtr, req)
 	if err != nil {
 		response.Error(c, err)
 		return
@@ -173,6 +181,15 @@ func (h *Handler) Publish(c *gin.Context) {
 
 	resp, err := h.service.Publish(c.Request.Context(), workspaceID, id)
 	if err != nil {
+		if appErr, ok := err.(*errors.AppError); ok && appErr.Code == errors.CodeValidation {
+			if title, ok := appErr.Details["error"]; ok && title == "property_not_ready" {
+				c.JSON(400, gin.H{
+					"error":   "property_not_ready",
+					"missing": strings.Split(appErr.Details["missing"], ","),
+				})
+				return
+			}
+		}
 		response.Error(c, err)
 		return
 	}

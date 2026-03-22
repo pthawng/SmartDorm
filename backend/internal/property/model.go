@@ -20,6 +20,12 @@ type Property struct {
 	Name        string         `db:"name"`
 	Address     string         `db:"address"`
 	City        string         `db:"city"`
+	District    *string        `db:"district"`
+	Ward        *string        `db:"ward"`
+	Latitude    *float64       `db:"latitude"`
+	Longitude   *float64       `db:"longitude"`
+	Slug        *string        `db:"slug"`
+	IdempotencyKey *string     `db:"idempotency_key"`
 	Type        *string        `db:"type"`
 	Status      PropertyStatus `db:"status"`
 	Amenities   []string       `db:"amenities"`

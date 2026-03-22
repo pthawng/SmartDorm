@@ -10,8 +10,10 @@ import (
 
 type CreatePropertyRequest struct {
 	Name        string   `json:"name" binding:"required,max=255"`
-	Address     string   `json:"address" binding:"required"`
 	City        string   `json:"city" binding:"required"`
+	District    string   `json:"district" binding:"required"`
+	Address     string   `json:"address" binding:"omitempty"`
+	Ward        string   `json:"ward" binding:"omitempty"`
 	Type        *string  `json:"type" binding:"omitempty"`
 	Description *string  `json:"description" binding:"omitempty"`
 	Amenities   []string `json:"amenities" binding:"omitempty"`
@@ -25,8 +27,12 @@ type AddPropertyImageRequest struct {
 
 type UpdatePropertyRequest struct {
 	Name        *string         `json:"name" binding:"omitempty,max=255"`
-	Address     *string         `json:"address" binding:"omitempty"`
 	City        *string         `json:"city" binding:"omitempty"`
+	District    *string         `json:"district" binding:"omitempty"`
+	Address     *string         `json:"address" binding:"omitempty"`
+	Ward        *string         `json:"ward" binding:"omitempty"`
+	Latitude    *float64        `json:"latitude" binding:"omitempty"`
+	Longitude   *float64        `json:"longitude" binding:"omitempty"`
 	Type        *string         `json:"type" binding:"omitempty"`
 	Status      *PropertyStatus `json:"status" binding:"omitempty,oneof=draft published archived"`
 	Description *string         `json:"description" binding:"omitempty"`
@@ -41,6 +47,10 @@ type PropertyResponse struct {
 	Name        string                   `json:"name"`
 	Address     string                   `json:"address"`
 	City        string                   `json:"city"`
+	District    *string                  `json:"district,omitempty"`
+	Ward        *string                  `json:"ward,omitempty"`
+	Latitude    *float64                 `json:"latitude,omitempty"`
+	Longitude   *float64                 `json:"longitude,omitempty"`
 	Type        *string                  `json:"type,omitempty"`
 	Status      PropertyStatus           `json:"status"`
 	Amenities   []string                 `json:"amenities"`
@@ -75,6 +85,10 @@ func mapToResponse(p *Property, images []*PropertyImage) *PropertyResponse {
 		Name:        p.Name,
 		Address:     p.Address,
 		City:        p.City,
+		District:    p.District,
+		Ward:        p.Ward,
+		Latitude:    p.Latitude,
+		Longitude:   p.Longitude,
 		Type:        p.Type,
 		Status:      p.Status,
 		Amenities:   p.Amenities,

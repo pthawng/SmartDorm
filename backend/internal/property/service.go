@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -12,7 +13,7 @@ import (
 )
 
 type Service interface {
-	Create(ctx context.Context, workspaceID uuid.UUID, req CreatePropertyRequest) (*PropertyResponse, error)
+	Create(ctx context.Context, workspaceID uuid.UUID, idempotencyKey *string, req CreatePropertyRequest) (*PropertyResponse, error)
 	Get(ctx context.Context, workspaceID, id uuid.UUID) (*PropertyResponse, error)
 	List(ctx context.Context, workspaceID uuid.UUID, params pagination.Params) ([]*PropertyResponse, int64, error)
 	Update(ctx context.Context, workspaceID, id uuid.UUID, req UpdatePropertyRequest) (*PropertyResponse, error)
@@ -35,16 +36,27 @@ func NewService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) Create(ctx context.Context, workspaceID uuid.UUID, req CreatePropertyRequest) (*PropertyResponse, error) {
+func (s *service) Create(ctx context.Context, workspaceID uuid.UUID, idempotencyKey *string, req CreatePropertyRequest) (*PropertyResponse, error) {
+	if idempotencyKey != nil {
+		existing, err := s.repo.GetByIdempotencyKey(ctx, workspaceID, *idempotencyKey)
+		if err == nil && existing != nil {
+			// Idempotency hit, return existing draft
+			return mapToResponse(existing, nil), nil
+		}
+	}
+
 	p := &Property{
-		WorkspaceID: workspaceID,
-		Name:        req.Name,
-		Address:     req.Address,
-		City:        req.City,
-		Type:        req.Type,
-		Amenities:   req.Amenities,
-		Status:      PropertyStatusDraft, // Always draft on creation
-		Description: req.Description,
+		WorkspaceID:    workspaceID,
+		Name:           req.Name,
+		Address:        req.Address,
+		City:           req.City,
+		District:       &req.District,
+		Ward:           &req.Ward,
+		Type:           req.Type,
+		Amenities:      req.Amenities,
+		Status:         PropertyStatusDraft, // Always draft on creation
+		Description:    req.Description,
+		IdempotencyKey: idempotencyKey,
 	}
 
 	err := s.repo.Create(ctx, workspaceID, p)
@@ -154,13 +166,14 @@ func (s *service) Publish(ctx context.Context, workspaceID, id uuid.UUID) (*Prop
 		return nil, apperr.NewInternal(err, "failed to get property")
 	}
 
+	missing := []string{}
 	// 2. Validate Image requirement
 	images, err := s.repo.GetImages(ctx, id)
 	if err != nil {
 		return nil, apperr.NewInternal(err, "failed to check images")
 	}
 	if len(images) == 0 {
-		return nil, apperr.NewValidation(map[string]string{"images": "Property must have at least one image to be published"})
+		missing = append(missing, "images")
 	}
 
 	// 3. Validate Room requirement
@@ -169,7 +182,14 @@ func (s *service) Publish(ctx context.Context, workspaceID, id uuid.UUID) (*Prop
 		return nil, apperr.NewInternal(err, "failed to check rooms")
 	}
 	if roomCount == 0 {
-		return nil, apperr.NewValidation(map[string]string{"rooms": "Property must have at least one room to be published"})
+		missing = append(missing, "units")
+	}
+
+	if len(missing) > 0 {
+		return nil, apperr.NewValidation(map[string]string{
+			"error": "property_not_ready", 
+			"missing": strings.Join(missing, ","),
+		})
 	}
 
 	// 4. Perform update to published

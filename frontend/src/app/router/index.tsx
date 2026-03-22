@@ -30,6 +30,9 @@ const TenantHome          = lazy(() => import('@/pages/(dashboard)/tenant-home')
 const WorkspacesPage      = lazy(() => import('@/pages/(dashboard)/workspaces'));
 const LandlordSetupPage = lazy(() => import('@/pages/(dashboard)/workspaces/setup'));
 const PropertyListPage    = lazy(() => import('@/pages/(dashboard)/properties/list'));
+const PropertyCreatePage  = lazy(() => import('@/pages/(dashboard)/properties/new'));
+const PropertyEditPage    = lazy(() => import('@/pages/(dashboard)/properties/edit'));
+const PropertyDetailPage  = lazy(() => import('@/pages/(dashboard)/properties/detail'));
 const RoomListPage        = lazy(() => import('@/pages/(dashboard)/rooms/list'));
 const RoomEditPage        = lazy(() => import('@/pages/(dashboard)/rooms/edit'));
 const ContractListPage    = lazy(() => import('@/pages/(dashboard)/contracts/list'));
@@ -106,6 +109,9 @@ export const router = createBrowserRouter([
           { path: 'workspaces',           element: <WorkspacesPage /> },
           { path: 'workspaces/setup',     element: <LandlordSetupPage /> },
           { path: 'properties',           element: <PropertyListPage /> },
+          { path: 'properties/new',       element: <PropertyCreatePage /> },
+          { path: 'properties/:pid',      element: <PropertyDetailPage /> },
+          { path: 'properties/:pid/edit', element: <PropertyEditPage /> },
           { path: 'rooms',                element: <RoomListPage /> },
           { path: 'rooms/:id/edit',       element: <RoomEditPage /> },
           { path: 'contracts',            element: <ContractListPage /> },

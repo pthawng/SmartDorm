@@ -15,6 +15,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, workspaceID uuid.UUID, p *Property) error
 	GetByID(ctx context.Context, workspaceID, id uuid.UUID) (*Property, error)
+	GetByIdempotencyKey(ctx context.Context, workspaceID uuid.UUID, key string) (*Property, error)
 	List(ctx context.Context, workspaceID uuid.UUID, params pagination.Params) ([]*Property, int64, error)
 	Update(ctx context.Context, workspaceID, id uuid.UUID, updates map[string]interface{}) (*Property, error)
 	Delete(ctx context.Context, workspaceID, id uuid.UUID) error
@@ -39,8 +40,8 @@ func NewRepository(db *db.Database) Repository {
 
 func (r *repository) Create(ctx context.Context, workspaceID uuid.UUID, p *Property) error {
 	const q = `
-		INSERT INTO properties (workspace_id, name, address, city, type, status, amenities, description)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO properties (workspace_id, name, address, city, district, ward, latitude, longitude, slug, type, status, idempotency_key, amenities, description)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		RETURNING id, created_at, updated_at, deleted_at, 0 AS room_count`
 
 	amenitiesJSON, err := json.Marshal(p.Amenities)
@@ -52,12 +53,37 @@ func (r *repository) Create(ctx context.Context, workspaceID uuid.UUID, p *Prope
 		p.Status = PropertyStatusDraft
 	}
 
-	return r.db.GetContext(ctx, p, q, workspaceID, p.Name, p.Address, p.City, p.Type, p.Status, amenitiesJSON, p.Description)
+	return r.db.GetContext(ctx, p, q, workspaceID, p.Name, p.Address, p.City, p.District, p.Ward, p.Latitude, p.Longitude, p.Slug, p.Type, p.Status, p.IdempotencyKey, amenitiesJSON, p.Description)
+}
+
+func (r *repository) GetByIdempotencyKey(ctx context.Context, workspaceID uuid.UUID, key string) (*Property, error) {
+	const q = `
+		SELECT p.id, p.workspace_id, p.name, p.address, p.city, p.district, p.ward, p.latitude, p.longitude, p.slug, p.type, p.status, p.idempotency_key, p.amenities, p.description, p.created_at, p.updated_at, p.deleted_at,
+		       COALESCE((SELECT COUNT(*) FROM rooms r WHERE r.property_id = p.id AND r.deleted_at IS NULL), 0) AS room_count
+		FROM properties p
+		WHERE p.workspace_id = $1 AND p.idempotency_key = $2 AND p.deleted_at IS NULL`
+
+	var row struct {
+		Property
+		AmenitiesRaw []byte `db:"amenities"`
+	}
+
+	if err := r.db.GetContext(ctx, &row, q, workspaceID, key); err != nil {
+		return nil, err
+	}
+
+	if row.AmenitiesRaw != nil {
+		if err := json.Unmarshal(row.AmenitiesRaw, &row.Property.Amenities); err != nil {
+			return nil, err
+		}
+	}
+
+	return &row.Property, nil
 }
 
 func (r *repository) GetByID(ctx context.Context, workspaceID, id uuid.UUID) (*Property, error) {
 	const q = `
-		SELECT p.id, p.workspace_id, p.name, p.address, p.city, p.type, p.status, p.amenities, p.description, p.created_at, p.updated_at, p.deleted_at,
+		SELECT p.id, p.workspace_id, p.name, p.address, p.city, p.district, p.ward, p.latitude, p.longitude, p.slug, p.type, p.status, p.idempotency_key, p.amenities, p.description, p.created_at, p.updated_at, p.deleted_at,
 		       COALESCE((SELECT COUNT(*) FROM rooms r WHERE r.property_id = p.id AND r.deleted_at IS NULL), 0) AS room_count
 		FROM properties p
 		WHERE p.id = $1 AND p.workspace_id = $2 AND p.deleted_at IS NULL`
@@ -95,7 +121,7 @@ func (r *repository) List(ctx context.Context, workspaceID uuid.UUID, params pag
 
 	// 2. Fetch paginated rows
 	const qRows = `
-		SELECT p.id, p.workspace_id, p.name, p.address, p.city, p.type, p.status, p.amenities, p.description, p.created_at, p.updated_at, p.deleted_at,
+		SELECT p.id, p.workspace_id, p.name, p.address, p.city, p.district, p.ward, p.latitude, p.longitude, p.slug, p.type, p.status, p.idempotency_key, p.amenities, p.description, p.created_at, p.updated_at, p.deleted_at,
 		       COALESCE((SELECT COUNT(*) FROM rooms r WHERE r.property_id = p.id AND r.deleted_at IS NULL), 0) AS room_count
 		FROM properties p
 		WHERE p.workspace_id = $1 AND p.deleted_at IS NULL
@@ -146,7 +172,8 @@ func (r *repository) Update(ctx context.Context, workspaceID, id uuid.UUID, upda
 	
 	i := 1
 	allowed := map[string]bool{
-		"name": true, "address": true, "city": true, 
+		"name": true, "address": true, "city": true, "district": true, "ward": true,
+		"latitude": true, "longitude": true, "slug": true,
 		"type": true, "status": true, "amenities": true, "description": true,
 	}
 
@@ -160,7 +187,7 @@ func (r *repository) Update(ctx context.Context, workspaceID, id uuid.UUID, upda
 
 	setClauses = append(setClauses, "updated_at = NOW()")
 
-	query += strings.Join(setClauses, ", ") + " WHERE id = $" + string(rune('0'+i)) + " AND workspace_id = $" + string(rune('0'+i+1)) + " AND deleted_at IS NULL RETURNING id, workspace_id, name, address, city, type, status, amenities, description, created_at, updated_at, deleted_at, 0 AS room_count"
+	query += strings.Join(setClauses, ", ") + " WHERE id = $" + string(rune('0'+i)) + " AND workspace_id = $" + string(rune('0'+i+1)) + " AND deleted_at IS NULL RETURNING id, workspace_id, name, address, city, district, ward, latitude, longitude, slug, type, status, idempotency_key, amenities, description, created_at, updated_at, deleted_at, 0 AS room_count"
 	args = append(args, id, workspaceID)
 
 	var row struct {
